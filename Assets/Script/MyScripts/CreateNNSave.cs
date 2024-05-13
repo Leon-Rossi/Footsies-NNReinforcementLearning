@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class CreateNNSave : MonoBehaviour
 {
-    public AIControl aiInterface;
+    public AIControl aiControl;
 
     float mutationFactor;
     float mutationThreshhold;
@@ -35,6 +35,7 @@ public class CreateNNSave : MonoBehaviour
     {
         mutationFactor = float.Parse(input);
         flag1 = true;
+        print("Test");
     }
 
     public void ReadMutaionThreshhold(string input)
@@ -71,16 +72,16 @@ public class CreateNNSave : MonoBehaviour
     {
         if(flag1 & flag2 & flag3 & flag4 & flag5 & flag6)
         {
-            aiInterface = GameObject.Find("GameMaster").GetComponent<AIControl>();
+            aiControl = GameObject.Find("GameMaster").GetComponent<AIControl>();
 
-            aiInterface.AISaves.Add(new AISave(mutationFactor, mutationThreshhold, populationCount, layerCount, layerSize, inputCount, outputCount, saveName));
+            aiControl.AISaves.Add(new AISave(mutationFactor, mutationThreshhold, populationCount, layerCount, layerSize, inputCount, outputCount, saveName));
             
             AIMenu.SetActive(true);
             GameObject.Find("CreateNNMenu").SetActive(false);
 
-            print("Test");
+            aiControl.SaveFile();
 
-            aiInterface.SaveFile();
+            print("New NN Created!");
         }
     }
 }

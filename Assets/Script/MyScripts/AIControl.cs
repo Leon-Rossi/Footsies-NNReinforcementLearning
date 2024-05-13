@@ -65,8 +65,11 @@ public class AIControl : MonoBehaviour
         if(!File.Exists(saveFilePath))
         {
             File.Create(saveFilePath);
+            print(saveFilePath);
+            print("New Save File created");
         }
         print(saveFilePath);
+        print("Found Save File");
     }
 
     //Saves the AISaves List into a JSON FLie

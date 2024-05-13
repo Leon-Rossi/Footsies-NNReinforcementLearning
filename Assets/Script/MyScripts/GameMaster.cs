@@ -9,12 +9,5 @@ public class GameMaster : MonoBehaviour
     void Start()
     {
         DontDestroyOnLoad(gameObject);
-        SceneManager.LoadScene("Menu");
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
     }
 }
