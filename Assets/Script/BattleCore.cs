@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
+using UnityEditor.Rendering;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -69,6 +70,8 @@ namespace Footsies
         NNFighterController nNFighterController = null;
         public bool rightIsNN;
         public bool leftIsNN;
+        public bool isNNTraining;
+        private float timeSinceLastDeath;
 
         private static uint maxRecordingInputFrame = 60 * 60 * 5;
         private InputData[] recordingP1Input = new InputData[maxRecordingInputFrame];
@@ -104,11 +107,39 @@ namespace Footsies
                 roundUIAnimator = roundUI.GetComponent<Animator>();
             }
 
-            nNFighterController = rightIsNN || leftIsNN ? GameObject.Find("FighterController").GetComponent<NNFighterController>() : null;
+            if(GameManager.Instance.isNNTraining)
+            {
+                nNFighterController = GameObject.Find("NNFighterController").GetComponent<NNFighterController>();
+                rightIsNN = true;
+                leftIsNN = true;
+                isNNTraining = true;
+                timeSinceLastDeath = 0;
+            }
         }
         
         void FixedUpdate()
         {
+            if(isNNTraining)
+            {
+                timeSinceLastDeath += Time.deltaTime;
+                if(timeSinceLastDeath > 10)
+                {
+                    if(fighter2.guardHealth > fighter1.guardHealth)
+                    {
+                        nNFighterController.NextNNDuel(true);
+                    }
+                    else
+                    {
+                        nNFighterController.NextNNDuel(false);
+                    }
+
+                    fighter1.SetupBattleStart(fighterDataList[0], new Vector2(-2f, 0f), true);
+                    fighter2.SetupBattleStart(fighterDataList[0], new Vector2(2f, 0f), false);
+
+                    timeSinceLastDeath = 0;
+                }
+            }
+
             switch(_roundState)
             {
                 case RoundStateType.Stop:
@@ -231,15 +262,36 @@ namespace Footsies
                     var deadFighter = _fighters.FindAll((f) => f.isDead);
                     if (deadFighter.Count == 1)
                     {
-                        if (deadFighter[0] == fighter1)
+                        if (deadFighter[0] == fighter1 && !isNNTraining)
                         {
                             fighter2RoundWon++;
                             fighter2.RequestWinAction();
                         }
-                        else if (deadFighter[0] == fighter2)
+                        else if (deadFighter[0] == fighter2 && !isNNTraining)
                         {
                             fighter1RoundWon++;
                             fighter1.RequestWinAction();
+                        }
+
+                        else if (deadFighter[0] == fighter1 && isNNTraining)
+                        {
+                            nNFighterController.NextNNDuel(false);
+                            fighter2.RequestWinAction();
+
+                            fighter1.SetupBattleStart(fighterDataList[0], new Vector2(-2f, 0f), true);
+                            fighter2.SetupBattleStart(fighterDataList[0], new Vector2(2f, 0f), false);
+
+                            timeSinceLastDeath = 0;
+                        }
+                        else if (deadFighter[0] == fighter2 && isNNTraining)
+                        {
+                            nNFighterController.NextNNDuel(true);
+                            fighter1.RequestWinAction();
+
+                            fighter1.SetupBattleStart(fighterDataList[0], new Vector2(-2f, 0f), true);
+                            fighter2.SetupBattleStart(fighterDataList[0], new Vector2(2f, 0f), false);
+                            
+                            timeSinceLastDeath = 0;
                         }
                     }
 
@@ -267,7 +319,10 @@ namespace Footsies
 
         void UpdateFightState()
         {
-            nNFighterController.UpdateFightStates();
+            if(isNNTraining)
+            {
+                nNFighterController.UpdateFightStates();
+            }
             
             var p1Input = GetP1InputData();
             var p2Input = GetP2InputData();

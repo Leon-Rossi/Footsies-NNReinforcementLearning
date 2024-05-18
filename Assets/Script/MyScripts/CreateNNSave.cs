@@ -12,8 +12,8 @@ public class CreateNNSave : MonoBehaviour
 
     int layerCount;
     int layerSize;
-    int inputCount = 4;
-    int outputCount = 1;
+    int inputCount = 60;
+    int outputCount = 2;
 
     string saveName;
 

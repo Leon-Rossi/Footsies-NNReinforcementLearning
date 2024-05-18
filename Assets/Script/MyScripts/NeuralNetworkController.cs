@@ -82,14 +82,10 @@ public class NeuralNetworkController : MonoBehaviour
     public List<float> RunNN(List<List<List<List<float>>>> nN, List<float> input, ActivationFunctions selectedActivationFunction)
     {
         List<float> currentInput = new List<float>();
-        List<float> nextInput = new List<float>(input);
-
-        int Count = 0;   
+        List<float> nextInput = new List<float>(input); 
 
         foreach(List<List<List<float>>> layer in nN)
         {
-            Count +=1;
-
             currentInput = new List<float>(nextInput);
 
             nextInput.Clear();
@@ -97,39 +93,11 @@ public class NeuralNetworkController : MonoBehaviour
             foreach(List<List<float>> node in layer)
             {
                 float output = node[1].Zip(currentInput, (x, y) => x * y).Sum() + node[0][0];
-                //nextInput.Add(ActivationFunction(output, selectedActivationFunction));
                 
                 nextInput.Add((float)(Math.Exp(output)/(1+Math.Exp(output))));
             }
         }
         return nextInput;
-    }
-
-    public float ActivationFunction(float input, ActivationFunctions selectedActivationFunction)
-    {
-        switch(selectedActivationFunction)
-        {
-            case ActivationFunctions.binary:
-            {
-                if(input > 1)
-                {
-                    return 1;
-                }
-                else
-                {
-                    return 0;
-                }
-            }
-            case ActivationFunctions.nonLinear:
-            {
-                break;
-            }
-            case ActivationFunctions.Sigmoid:
-            {
-                return (float)(Math.Exp(input)/(1+Math.Exp(input)));
-            }
-        }
-        return 0;
     }
 
     float RandomValue()

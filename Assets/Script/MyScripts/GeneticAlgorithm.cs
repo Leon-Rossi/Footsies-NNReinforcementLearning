@@ -11,12 +11,6 @@ public class GeneticAlgorithm : MonoBehaviour
     public List<List<List<List<List<float>>>>> CreateNewPopulation(int populationCount, float mutationFactor, float mutationThreshhold, List<List<List<List<List<float>>>>> list)
     {
         List<List<List<List<List<float>>>>> output = new List<List<List<List<List<float>>>>>();
-        list = SortListByFitness(list);
-
-        foreach(List<List<List<List<float>>>> i in list)
-        {
-            Debug.Log(Math.Sqrt(i[0][0][0][1]));
-        }
 
         float allFitnessValues = 0;
 
@@ -39,20 +33,20 @@ public class GeneticAlgorithm : MonoBehaviour
     {
         allFitnessValues = 0;
 
-        foreach(List<List<List<List<float>>>> i in list)
+        for(int i = 0; i < list.Count(); i++)
         {
-            allFitnessValues += i[0][0][0][1];
+            allFitnessValues += i * i;
         }
         
         float selectedInt = UnityEngine.Random.value * allFitnessValues;
 
-        foreach(List<List<List<List<float>>>> i in list)
+        for(int i = 0; i < list.Count(); i++)
         {
-            selectedInt -= i[0][0][0][1];
+            selectedInt -= i * i;
             
             if(selectedInt <= 0)
             {
-                List<List<List<List<float>>>> output = CreateSerializedCopy<List<List<List<List<float>>>>>(i);
+                List<List<List<List<float>>>> output = CreateSerializedCopy<List<List<List<List<float>>>>>(list[i]);
                 return output;
             }
 
@@ -124,30 +118,6 @@ public class GeneticAlgorithm : MonoBehaviour
         }
 
         return list;
-    }
-
-    public List<List<List<List<List<float>>>>> SortListByFitness(List<List<List<List<List<float>>>>> list)
-    {
-        List<List<List<List<List<float>>>>> output = new List<List<List<List<List<float>>>>>();
-
-        while(list.Count() != 0)
-        {
-            int smallest = 0;
-
-            foreach (int i in Enumerable.Range(0, list.Count()))
-            {
-                if(list[i][0][0][0][1] < list[smallest][0][0][0][1])
-                {
-                    smallest = i;
-                }
-
-            }
-            output.Add(list[smallest]);
-            list.RemoveAt(smallest);
-            
-        }
-
-        return output;
     }
 
     float RandomValue()

@@ -16,6 +16,7 @@ namespace Footsies
             BGMToggle,
             SEToggle,
             AIMenu,
+            AITraining,
         }
 
         public Action action;
@@ -53,6 +54,9 @@ namespace Footsies
                 case Action.AIMenu:
                     LoadAIMenu();
                     break;
+                case Action.AITraining:
+                    LoadTrainingScene();
+                    break;
 
 
             }
@@ -71,6 +75,11 @@ namespace Footsies
         public void LoadVsPlayer()
         {
             GameManager.Instance.LoadVsPlayerScene();
+        }
+
+        public void LoadTrainingScene()
+        {
+            GameManager.Instance.LoadTrainingScene();
         }
 
         public void ExitGame()

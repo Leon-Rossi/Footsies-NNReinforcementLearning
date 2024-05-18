@@ -28,7 +28,7 @@ public class SelectNN : MonoBehaviour
 
     }
 
-        public void ReadGeneration(string input)
+    public void ReadGeneration(string input)
     {
         speed = int.Parse(input);
         aiControl.speed = speed;
@@ -37,11 +37,13 @@ public class SelectNN : MonoBehaviour
 
     public void ReadName(string input)
     {
+        aiSaves = aiControl.AISaves;
         foreach(AISave save in aiSaves)
         {
             if(save.saveName == input)
             {
                 selectedSafe = aiSaves.IndexOf(save);
+                print("Found save");
             }
         }
         aiControl.currentAISave = selectedSafe;

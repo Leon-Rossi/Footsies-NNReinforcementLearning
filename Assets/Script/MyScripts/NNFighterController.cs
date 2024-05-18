@@ -33,6 +33,16 @@ public class NNFighterController : MonoBehaviour
 
         currentAISave = aiControl.currentAISave;
         NNList = aiControl.AISaves[currentAISave].GiveLastGeneration();
+
+        listPos = 0;
+        listRun = 0;
+
+        NNRight = NNList[listPos];
+        NNLeft = NNList[listPos + 1];
+
+        Time.timeScale = aiControl.speed;
+
+        InitiateFightStates();
     }
 
     // Update is called once per frame
@@ -41,7 +51,7 @@ public class NNFighterController : MonoBehaviour
         
     }
 
-    void NextNNDuel(bool rightFighterWon)
+    public void NextNNDuel(bool rightFighterWon)
     {
         //Sorts based on Revised Bubble Sort
         int n = NNList.Count-1;
@@ -54,7 +64,9 @@ public class NNFighterController : MonoBehaviour
             bubbleSortFlag = true;
         }
 
-        if(listRun !> n)
+        listPos++;
+
+        if(listRun <= n)
         {
             if(listPos >= n)
             {
@@ -64,6 +76,8 @@ public class NNFighterController : MonoBehaviour
                 {
                     StartNextGeneration();
                     bubbleSortFlag = false;
+                    listRun = 0;
+                    listPos = 0;
                 }
             }
             else
@@ -76,6 +90,8 @@ public class NNFighterController : MonoBehaviour
         {
             //Start next Generation
             bubbleSortFlag = false;
+            listRun = 0;
+            listPos = 0;
             StartNextGeneration();
         }
     }
@@ -106,7 +122,7 @@ public class NNFighterController : MonoBehaviour
         {
             moveLeft = true;
         }
-        else if(output[2] > 0.6)
+        else if(output[1] > 0.6)
         {
             moveRight = true;
         }
@@ -137,7 +153,7 @@ public class NNFighterController : MonoBehaviour
         {
             moveLeft = true;
         }
-        else if(output[2] > 0.6)
+        else if(output[1] > 0.6)
         {
             moveRight = true;
         }
@@ -177,7 +193,7 @@ public class NNFighterController : MonoBehaviour
 
     public void UpdateFightStates()
     {
-        for (int i = maxFightStateRecord; i > 0; i--)
+        for (int i = maxFightStateRecord - 1; i > 0; i--)
         {
             leftFightState[i] = leftFightState[i - 1];
         }
@@ -207,7 +223,7 @@ public class NNFighterController : MonoBehaviour
                                                     || battleCore.fighter2.currentActionID == (int)CommonActionID.B_SPECIAL ? 1 : 0,
         };
 
-        for (int i = maxFightStateRecord; i > 0; i--)
+        for (int i = maxFightStateRecord - 1; i > 0; i--)
         {
             rightFightState[i] = rightFightState[i - 1];
         }
@@ -237,5 +253,15 @@ public class NNFighterController : MonoBehaviour
                                                     || battleCore.fighter1.currentActionID == (int)CommonActionID.B_SPECIAL ? 1 : 0,
 
         };
+    }
+
+    private void InitiateFightStates()
+    {
+        for(int i = 0; i < maxFightStateRecord; i++)
+        {
+            List<float> list = new List<float>(){0,0,0,0,0,0,0,0,0,0,0,0};
+            leftFightState.Add(list);
+        }  
+        rightFightState = leftFightState;
     }
 }

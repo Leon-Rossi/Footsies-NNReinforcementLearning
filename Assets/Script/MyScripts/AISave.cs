@@ -57,7 +57,6 @@ public class AISave
 
     public void SetUpNextGeneration()
     {
-        allNeuralNetworks[currentNN[0]] = learningAlgorithm.SortListByFitness(allNeuralNetworks[currentNN[0]]);
         bestNeuralNetworks.Add(learningAlgorithm.CreateSerializedCopy<List<List<List<List<float>>>>>(allNeuralNetworks.Last().Last()));
 
         allNeuralNetworks.Add(learningAlgorithm.CreateNewPopulation(populationCount, mutationFactor, mutationThreshhold, allNeuralNetworks.Last()));

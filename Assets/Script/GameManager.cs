@@ -12,12 +12,15 @@ namespace Footsies
             Title = 1,
             Battle = 2,
             AIMenu = 3,
+            AITraining = 4,
         }
 
         public AudioClip menuSelectAudioClip;
 
         public SceneIndex currentScene { get; private set; }
         public bool isVsCPU { get; private set; }
+        public bool isVsNN { get; private set; }
+        public bool isNNTraining { get; private set; }
 
         private void Awake()
         {
@@ -57,6 +60,13 @@ namespace Footsies
         public void LoadVsCPUScene()
         {
             isVsCPU = true;
+            LoadBattleScene();
+        }
+
+        public void LoadTrainingScene()
+        {
+            isVsCPU = false;
+            isNNTraining = true; 
             LoadBattleScene();
         }
 
