@@ -51,5 +51,5 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "Footsies-LeonRossi.sln"
+    "dotnet.defaultSolution": "Footsies-NNGeneticAlgorithm.sln"
 }

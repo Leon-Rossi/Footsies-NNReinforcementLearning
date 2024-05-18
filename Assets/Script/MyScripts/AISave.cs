@@ -69,6 +69,17 @@ public class AISave
         Debug.Log("Current Gen nr.: " + currentNN[0]);
     }
 
+    public List<List<List<List<List<float>>>>> GiveLastGeneration()
+    {
+        return allNeuralNetworks.Last();
+    }
+
+    public void ReplaceLastGeneration(List<List<List<List<List<float>>>>> input)
+    {
+        allNeuralNetworks.RemoveAt(allNeuralNetworks.Count()-1);
+        allNeuralNetworks.Add(input);
+    }
+
     public int[] GiveNN()
     {
         return currentNN;

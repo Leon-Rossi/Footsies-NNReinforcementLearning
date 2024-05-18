@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -65,6 +66,10 @@ namespace Footsies
 
         private BattleAI battleAI = null;
 
+        NNFighterController nNFighterController = null;
+        public bool rightIsNN;
+        public bool leftIsNN;
+
         private static uint maxRecordingInputFrame = 60 * 60 * 5;
         private InputData[] recordingP1Input = new InputData[maxRecordingInputFrame];
         private InputData[] recordingP2Input = new InputData[maxRecordingInputFrame];
@@ -98,6 +103,8 @@ namespace Footsies
             {
                 roundUIAnimator = roundUI.GetComponent<Animator>();
             }
+
+            nNFighterController = rightIsNN || leftIsNN ? GameObject.Find("FighterController").GetComponent<NNFighterController>() : null;
         }
         
         void FixedUpdate()
@@ -260,6 +267,8 @@ namespace Footsies
 
         void UpdateFightState()
         {
+            nNFighterController.UpdateFightStates();
+            
             var p1Input = GetP1InputData();
             var p2Input = GetP2InputData();
             RecordInput(p1Input, p2Input);
@@ -304,9 +313,17 @@ namespace Footsies
             var time = Time.fixedTime - roundStartTime;
 
             InputData p1Input = new InputData();
-            p1Input.input |= InputManager.Instance.GetButton(InputManager.Command.p1Left) ? (int)InputDefine.Left : 0;
-            p1Input.input |= InputManager.Instance.GetButton(InputManager.Command.p1Right) ? (int)InputDefine.Right : 0;
-            p1Input.input |= InputManager.Instance.GetButton(InputManager.Command.p1Attack) ? (int)InputDefine.Attack : 0;
+
+            if(leftIsNN)
+            {
+                p1Input.input = nNFighterController.RunLeftNN();
+            }
+            else
+            {
+                p1Input.input |= InputManager.Instance.GetButton(InputManager.Command.p1Left) ? (int)InputDefine.Left : 0;
+                p1Input.input |= InputManager.Instance.GetButton(InputManager.Command.p1Right) ? (int)InputDefine.Right : 0;
+                p1Input.input |= InputManager.Instance.GetButton(InputManager.Command.p1Attack) ? (int)InputDefine.Attack : 0;
+            }
             p1Input.time = time;
 
             if (debugP1Attack)
@@ -331,6 +348,10 @@ namespace Footsies
             if (battleAI != null)
             {
                 p2Input.input |= battleAI.getNextAIInput();
+            }
+            else if(rightIsNN)
+            {
+                p2Input.input = nNFighterController.RunRightNN();
             }
             else
             {
