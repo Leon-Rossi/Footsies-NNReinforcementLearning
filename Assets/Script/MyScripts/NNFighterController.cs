@@ -72,10 +72,10 @@ public class NNFighterController : MonoBehaviour
             {
                 listRun ++;
                 listPos = 0;
-                if(bubbleSortFlag)
+
+                if(!bubbleSortFlag)
                 {
                     StartNextGeneration();
-                    bubbleSortFlag = false;
                     listRun = 0;
                     listPos = 0;
                 }
