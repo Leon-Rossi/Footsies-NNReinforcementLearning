@@ -1,7 +1,10 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Footsies;
 using UnityEngine;
+using UnityEngine.Animations;
 
 public class NNFighterController : MonoBehaviour
 {
@@ -9,12 +12,15 @@ public class NNFighterController : MonoBehaviour
     NeuralNetworkController neuralNetworkController;
     BattleCore battleCore;
 
+    int debugI = 0;
+
     int currentAISave;
 
     List<List<List<List<List<float>>>>> NNList = new List<List<List<List<List<float>>>>>();
 
-    List<List<List<List<float>>>> NNLeft = new List<List<List<List<float>>>>();
-    List<List<List<List<float>>>> NNRight = new List<List<List<List<float>>>>();
+    int NNLeft;
+    int NNRight;
+    int maxFightPerCapita = 2;
 
     List<List<float>> leftFightState = new List<List<float>>();
     List<List<float>> rightFightState = new List<List<float>>();
@@ -36,22 +42,24 @@ public class NNFighterController : MonoBehaviour
 
         listPos = 0;
         listRun = 0;
+        NNRight = 0;
 
-        NNRight = NNList[listPos];
-        NNLeft = NNList[listPos + 1];
+        float smallestValue = 10000;
+        for(int i = 0; i <= NNList.Count -1; i++)
+        {
+            if(NNList[NNRight][0][0][0][1] - NNList[i][0][0][0][1] < smallestValue)
+            {
+                NNLeft = i;
+                smallestValue = NNList[NNRight][0][0][0][1] - NNList[i][0][0][0][1];
+            }
+        }
 
         Time.timeScale = aiControl.speed;
 
         InitiateFightStates();
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
-
-    public void NextNNDuel(bool rightFighterWon)
+    public void OldNextNNDuel(bool rightFighterWon)
     {
         //Sorts based on Revised Bubble Sort
         int n = NNList.Count-1;
@@ -59,8 +67,8 @@ public class NNFighterController : MonoBehaviour
         //Switch if necessary
         if(rightFighterWon)
         {
-            NNList[listPos] = NNLeft;
-            NNList[listPos + 1] = NNRight;
+            NNList[listPos] = NNList[NNLeft];
+            NNList[listPos + 1] = NNList[NNRight];
             bubbleSortFlag = true;
         }
 
@@ -82,8 +90,8 @@ public class NNFighterController : MonoBehaviour
             }
             else
             {
-                NNRight = NNList[listPos];
-                NNLeft = NNList[listPos + 1];
+                NNList[NNRight] = NNList[listPos];
+                NNList[NNLeft] = NNList[listPos + 1];
             }
         }
         else
@@ -93,6 +101,54 @@ public class NNFighterController : MonoBehaviour
             listRun = 0;
             listPos = 0;
             StartNextGeneration();
+        }
+    }
+
+    public void NextNNDuel(bool rightFighterWon)
+    {
+        float WinExpectedRight = (float)(1/(1+ Math.Pow(10, (NNList[NNLeft][0][0][0][1] - NNList[NNRight][0][0][0][1])/ 400)));
+        float WinExpectedLeft = (float)(1/(1+ Math.Pow(10, (NNList[NNRight][0][0][0][1] - NNList[NNLeft][0][0][0][1])/ 400)));
+
+        debugI ++;
+        print(debugI);
+
+        if(rightFighterWon)
+        {
+            NNList[NNRight][0][0][0][1] += 30 * (1-WinExpectedRight);
+            NNList[NNLeft][0][0][0][1] += 30 * (0-WinExpectedLeft);
+        }
+        else
+        {
+            NNList[NNRight][0][0][0][1] += 30 * (0-WinExpectedRight);
+            NNList[NNLeft][0][0][0][1] += 30 * (1-WinExpectedLeft);
+        }
+
+        if(listRun < maxFightPerCapita -1)
+        {
+            NNRight = listPos;
+
+            float smallestValue = 10000;
+            for(int i = 0; i <= NNList.Count -1; i++)
+            {
+                if(NNList[NNRight][0][0][0][1] - NNList[i][0][0][0][1] < smallestValue)
+                {
+                    NNLeft = i;
+                    smallestValue = NNList[NNRight][0][0][0][1] - NNList[i][0][0][0][1];
+                }
+            }
+
+            listPos ++;
+            if(listPos >= NNList.Count)
+            {
+                listPos = 0;
+                listRun ++;
+            }
+        }
+        else
+        {
+            StartNextGeneration();
+            listPos = 0;
+            listRun = 0;
         }
     }
 
@@ -111,7 +167,7 @@ public class NNFighterController : MonoBehaviour
 
         int inputData = 0;
 
-        List<float> output = neuralNetworkController.RunNN(NNRight, GetRightInputs(), NeuralNetworkController.ActivationFunctions.Sigmoid);
+        List<float> output = neuralNetworkController.RunNN(NNList[NNRight], GetRightInputs(), NeuralNetworkController.ActivationFunctions.Sigmoid);
         
         //Add outputs as Fighter Inputs
         if(output[0] > 0.5)
@@ -142,7 +198,7 @@ public class NNFighterController : MonoBehaviour
 
         int inputData = 0;
 
-        List<float> output = neuralNetworkController.RunNN(NNLeft, GetLeftInputs(), NeuralNetworkController.ActivationFunctions.Sigmoid);
+        List<float> output = neuralNetworkController.RunNN(NNList[NNLeft], GetLeftInputs(), NeuralNetworkController.ActivationFunctions.Sigmoid);
         
         //Add outputs as Fighter Inputs
         if(output[0] > 0.5)

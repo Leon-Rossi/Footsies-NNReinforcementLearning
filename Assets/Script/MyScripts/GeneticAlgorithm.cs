@@ -79,7 +79,7 @@ public class GeneticAlgorithm : MonoBehaviour
             }
         }
 
-        output[0][0][0][1] = 0;
+        output[0][0][0][1] = (list1[0][0][0][1] + list2[0][0][0][1])/2;
 
         return output;
 
@@ -118,6 +118,30 @@ public class GeneticAlgorithm : MonoBehaviour
         }
 
         return list;
+    }
+
+    public List<List<List<List<List<float>>>>> SortListByFitness(List<List<List<List<List<float>>>>> list)
+    {
+        List<List<List<List<List<float>>>>> output = new List<List<List<List<List<float>>>>>();
+
+        while(list.Count() != 0)
+        {
+            int smallest = 0;
+
+            foreach (int i in Enumerable.Range(0, list.Count()))
+            {
+                if(list[i][0][0][0][1] < list[smallest][0][0][0][1])
+                {
+                    smallest = i;
+                }
+
+            }
+            output.Add(list[smallest]);
+            list.RemoveAt(smallest);
+            
+        }
+
+        return output;
     }
 
     float RandomValue()
