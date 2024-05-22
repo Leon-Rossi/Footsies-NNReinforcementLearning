@@ -14,9 +14,9 @@ public class GeneticAlgorithm : MonoBehaviour
 
         float allFitnessValues = 0;
 
-        foreach(List<List<List<List<float>>>> i in list)
+        for(int i = 0; i < list.Count(); i++)
         {
-            allFitnessValues += i[0][0][0][1];
+            allFitnessValues += i * i;
         }
 
         output.Add(list.Last());
@@ -31,13 +31,6 @@ public class GeneticAlgorithm : MonoBehaviour
 
     public List<List<List<List<float>>>> SelectionFromList(List<List<List<List<List<float>>>>> list, float allFitnessValues)
     {
-        allFitnessValues = 0;
-
-        for(int i = 0; i < list.Count(); i++)
-        {
-            allFitnessValues += i * i;
-        }
-        
         float selectedInt = UnityEngine.Random.value * allFitnessValues;
 
         for(int i = 0; i < list.Count(); i++)

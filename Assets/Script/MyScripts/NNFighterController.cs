@@ -12,15 +12,13 @@ public class NNFighterController : MonoBehaviour
     NeuralNetworkController neuralNetworkController;
     BattleCore battleCore;
 
-    int debugI = 0;
-
     int currentAISave;
 
     List<List<List<List<List<float>>>>> NNList = new List<List<List<List<List<float>>>>>();
 
     int NNLeft;
     int NNRight;
-    int maxFightPerCapita = 2;
+    int maxFightPerCapita = 10;
 
     List<List<float>> leftFightState = new List<List<float>>();
     List<List<float>> rightFightState = new List<List<float>>();
@@ -108,9 +106,6 @@ public class NNFighterController : MonoBehaviour
     {
         float WinExpectedRight = (float)(1/(1+ Math.Pow(10, (NNList[NNLeft][0][0][0][1] - NNList[NNRight][0][0][0][1])/ 400)));
         float WinExpectedLeft = (float)(1/(1+ Math.Pow(10, (NNList[NNRight][0][0][0][1] - NNList[NNLeft][0][0][0][1])/ 400)));
-
-        debugI ++;
-        print(debugI);
 
         if(rightFighterWon)
         {
