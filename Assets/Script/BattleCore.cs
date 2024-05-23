@@ -318,10 +318,6 @@ namespace Footsies
 
         void UpdateFightState()
         {
-            if(isNNTraining)
-            {
-                nNFighterController.UpdateFightStates();
-            }
             
             var p1Input = GetP1InputData();
             var p2Input = GetP2InputData();
