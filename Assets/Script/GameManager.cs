@@ -54,20 +54,34 @@ namespace Footsies
         public void LoadVsPlayerScene()
         {
             isVsCPU = false;
+            isVsNN = false;
+            isNNTraining = false;
             LoadBattleScene();
         }
 
         public void LoadVsCPUScene()
         {
-            isVsCPU = true;
+            isVsCPU = false;
+            isVsNN = false;
+            isNNTraining = false;
             LoadBattleScene();
         }
 
         public void LoadTrainingScene()
         {
             isVsCPU = false;
+            isVsNN = false;
             isNNTraining = true; 
             LoadBattleScene();
+        }
+
+        public void LoadPlayAIScene()
+        {
+            isVsCPU = false;
+            isNNTraining = false;
+            isVsNN = true;
+            LoadBattleScene();
+            print("Load Play AI");
         }
 
         private void LoadBattleScene()

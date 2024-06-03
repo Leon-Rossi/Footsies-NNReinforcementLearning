@@ -17,6 +17,7 @@ namespace Footsies
             SEToggle,
             AIMenu,
             AITraining,
+            PlayAI,
         }
 
         public Action action;
@@ -57,6 +58,9 @@ namespace Footsies
                 case Action.AITraining:
                     LoadTrainingScene();
                     break;
+                case Action.PlayAI:
+                    LoadPlayAIScene();
+                    break;
 
 
             }
@@ -80,6 +84,11 @@ namespace Footsies
         public void LoadTrainingScene()
         {
             GameManager.Instance.LoadTrainingScene();
+        }
+
+        public void LoadPlayAIScene()
+        {
+            GameManager.Instance.LoadPlayAIScene();
         }
 
         public void ExitGame()

@@ -75,7 +75,7 @@ public class NeuralNetworkController : MonoBehaviour
             }
         }
                 
-        nN[0][0][0].Add(0);
+        nN[0][0][0].Add(300);
         return nN;
     }
 

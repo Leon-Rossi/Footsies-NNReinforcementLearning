@@ -3,14 +3,17 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Footsies;
+using UnityEditor.PackageManager.Requests;
 using UnityEngine;
 using UnityEngine.Animations;
+using UnityEngine.XR;
 
 public class NNFighterController : MonoBehaviour
 {
     AIControl aiControl;
     NeuralNetworkController neuralNetworkController;
     BattleCore battleCore;
+    SelectNN selectNN;
 
     int currentAISave;
 
@@ -18,13 +21,15 @@ public class NNFighterController : MonoBehaviour
 
     int NNLeft;
     int NNRight;
-    int maxFightPerCapita = 10;
+    int maxFightPerCapita = 8;
 
     float leftTimeSinceNoAttack;
     float rightTimeSinceNoAttack;
 
     int listRun;
     int listPos;
+
+    bool isVsNN;
     
 
     // Start is called before the first frame update
@@ -33,54 +38,75 @@ public class NNFighterController : MonoBehaviour
         aiControl = GameObject.Find("GameMaster").GetComponent<AIControl>();
         neuralNetworkController = GameObject.Find("GameMaster").GetComponent<NeuralNetworkController>();
         battleCore = GameObject.Find("BattleCore").GetComponent<BattleCore>();
+        selectNN = GameObject.Find("MenuManager").GetComponent<SelectNN>();
 
         currentAISave = aiControl.currentAISave;
         NNList = aiControl.AISaves[currentAISave].GiveLastGeneration();
 
-        listPos = 0;
+        listPos = 1;
         listRun = 0;
         NNRight = 0;
 
         float smallestValue = 10000;
         for(int i = 0; i <= NNList.Count -1; i++)
         {
-            if(NNList[NNRight][0][0][0][1] - NNList[i][0][0][0][1] < smallestValue)
+            if(Math.Abs(NNList[NNRight][0][0][0][1] - NNList[i][0][0][0][1]) < smallestValue && NNRight != i)
             {
                 NNLeft = i;
                 smallestValue = NNList[NNRight][0][0][0][1] - NNList[i][0][0][0][1];
             }
         }
 
+        if(GameManager.Instance.isVsNN)
+        {
+            NNList = aiControl.AISaves[selectNN.selectedSafe].bestNeuralNetworks;
+            isVsNN = true;
+            NNRight = selectNN.generation;
+            Debug.Log("play");
+            Debug.Log(NNRight); 
+        }
+
         Time.timeScale = aiControl.speed;
     }
 
-    public void NextNNDuel(bool rightFighterWon)
+    public void NextNNDuel(bool rightFighterWon = false, bool draw = false, bool winByGuard = false)
     {
-        float WinExpectedRight = (float)(1/(1+ Math.Pow(10, (NNList[NNLeft][0][0][0][1] - NNList[NNRight][0][0][0][1])/ 400)));
-        float WinExpectedLeft = (float)(1/(1+ Math.Pow(10, (NNList[NNRight][0][0][0][1] - NNList[NNLeft][0][0][0][1])/ 400)));
+        int gameValue = winByGuard ? 3 : 30;
 
-        if(rightFighterWon)
+        if(!draw)
         {
-            NNList[NNRight][0][0][0][1] += 30 * (1-WinExpectedRight);
-            NNList[NNLeft][0][0][0][1] += 30 * (0-WinExpectedLeft);
-        }
-        else
-        {
-            NNList[NNRight][0][0][0][1] += 30 * (0-WinExpectedRight);
-            NNList[NNLeft][0][0][0][1] += 30 * (1-WinExpectedLeft);
+            float WinExpectedRight = (float)(1/(1+ Math.Pow(10, (NNList[NNLeft][0][0][0][1] - NNList[NNRight][0][0][0][1])/ 400)));
+            float WinExpectedLeft = (float)(1/(1+ Math.Pow(10, (NNList[NNRight][0][0][0][1] - NNList[NNLeft][0][0][0][1])/ 400)));
+            
+            if(rightFighterWon)
+            {
+                NNList[NNRight][0][0][0][1] += gameValue * (1-WinExpectedRight);
+                NNList[NNLeft][0][0][0][1] += gameValue * (0-WinExpectedLeft);
+            }
+            else
+            {
+                NNList[NNRight][0][0][0][1] += gameValue * (0-WinExpectedRight);
+                NNList[NNLeft][0][0][0][1] += gameValue * (1-WinExpectedLeft);
+            }
         }
 
-        if(listRun < maxFightPerCapita -1)
+
+
+        if(listRun <= maxFightPerCapita -1)
         {
             NNRight = listPos;
 
             float smallestValue = 10000;
             for(int i = 0; i <= NNList.Count -1; i++)
             {
-                if(NNList[NNRight][0][0][0][1] - NNList[i][0][0][0][1] < smallestValue)
+                if(Math.Abs(NNList[NNRight][0][0][0][1] - NNList[i][0][0][0][1]) < smallestValue && NNRight != i)
                 {
                     NNLeft = i;
-                    smallestValue = NNList[NNRight][0][0][0][1] - NNList[i][0][0][0][1];
+                    smallestValue = Math.Abs(NNList[NNRight][0][0][0][1] - NNList[i][0][0][0][1]);
+                    if(NNRight == i)
+                    {
+                        print("L");
+                    }
                 }
             }
 
@@ -104,6 +130,8 @@ public class NNFighterController : MonoBehaviour
         aiControl.AISaves[currentAISave].ReplaceLastGeneration(NNList);
         aiControl.AISaves[currentAISave].SetUpNextGeneration();
         NNList = aiControl.AISaves[currentAISave].GiveLastGeneration();
+
+        aiControl.SaveFile();
     }
 
     public int RunRightNN()
@@ -120,7 +148,13 @@ public class NNFighterController : MonoBehaviour
         if(output[0] > 0.5)
         {
             attack = true;
+            rightTimeSinceNoAttack ++;
         }
+        else
+        {
+            rightTimeSinceNoAttack = 0;
+        }
+
         if(output[1] < 0.4)
         {
             moveLeft = true;
@@ -151,12 +185,18 @@ public class NNFighterController : MonoBehaviour
         if(output[0] > 0.5)
         {
             attack = true;
+            leftTimeSinceNoAttack ++;
         }
-        if(output[1] < 0.4)
+        else
+        {
+            leftTimeSinceNoAttack = 0;
+        }
+
+        if(output[1] > 0.6)
         {
             moveLeft = true;
         }
-        else if(output[1] > 0.6)
+        else if(output[1] < 0.4)
         {
             moveRight = true;
         }
@@ -170,78 +210,39 @@ public class NNFighterController : MonoBehaviour
 
     public List<float> GetLeftInputs()
     {
-        if(battleCore.fighter1.currentActionID == (int)CommonActionID.N_ATTACK || battleCore.fighter1.currentActionID == (int)CommonActionID.B_ATTACK)
-        {
-            leftTimeSinceNoAttack += Time.deltaTime;
-        }
-        else
-        {
-            leftTimeSinceNoAttack = 0;
-        }
-    
         return new List<float>(){
-            1, //is Right
-            battleCore.fighter2.position.x - battleCore.fighter1.position.x,
+            Math.Abs(battleCore.fighter2.position.x - battleCore.fighter1.position.x),
+
             leftTimeSinceNoAttack,
+            battleCore.fighter1.currentActionID,
+            battleCore.fighter1.currentActionFrame,
+            battleCore.fighter1.currentHitStunFrame,
+            battleCore.fighter1.guardHealth,
 
-            battleCore.fighter1.currentActionID == (float)CommonActionID.DAMAGE ? 1 : 0,
-            battleCore.fighter1.currentActionID == (int)CommonActionID.GUARD_BREAK ? 1 : 0,
-            battleCore.fighter1.currentActionID == (int)CommonActionID.GUARD_CROUCH
-                                                    || battleCore.fighter1.currentActionID == (int)CommonActionID.GUARD_STAND
-                                                    || battleCore.fighter1.currentActionID == (int)CommonActionID.GUARD_M ? 1 : 0,
-            battleCore.fighter1.currentActionID == (int)CommonActionID.N_ATTACK
-                                                    || battleCore.fighter1.currentActionID == (int)CommonActionID.B_ATTACK ? 1 : 0,
-            battleCore.fighter1.currentActionID == (int)CommonActionID.N_SPECIAL
-                                                    || battleCore.fighter1.currentActionID == (int)CommonActionID.B_SPECIAL ? 1 : 0,
-
-            battleCore.fighter2.currentActionID == (float)CommonActionID.DAMAGE ? 1 : 0,
-            battleCore.fighter2.currentActionID == (int)CommonActionID.GUARD_BREAK ? 1 : 0,
-            battleCore.fighter2.currentActionID == (int)CommonActionID.GUARD_CROUCH
-                                                    || battleCore.fighter2.currentActionID == (int)CommonActionID.GUARD_STAND
-                                                    || battleCore.fighter2.currentActionID == (int)CommonActionID.GUARD_M ? 1 : 0,
-            battleCore.fighter2.currentActionID == (int)CommonActionID.N_ATTACK
-                                                    || battleCore.fighter2.currentActionID == (int)CommonActionID.B_ATTACK ? 1 : 0,
-            battleCore.fighter2.currentActionID == (int)CommonActionID.N_SPECIAL
-                                                    || battleCore.fighter2.currentActionID == (int)CommonActionID.B_SPECIAL ? 1 : 0,
+            rightTimeSinceNoAttack,
+            battleCore.fighter2.currentActionID,
+            battleCore.fighter2.currentActionFrame,
+            battleCore.fighter2.currentHitStunFrame,
+            battleCore.fighter2.guardHealth,
         };
     }
 
     public List<float> GetRightInputs()
     {
-        if(battleCore.fighter1.currentActionID == (int)CommonActionID.N_ATTACK || battleCore.fighter1.currentActionID == (int)CommonActionID.B_ATTACK)
-        {
-            rightTimeSinceNoAttack += Time.deltaTime;
-        }
-        else
-        {
-            rightTimeSinceNoAttack = 0;
-        }
-
         return new List<float>(){
-            0, //is Right
-            battleCore.fighter2.position.x - battleCore.fighter1.position.x,
+            Math.Abs(battleCore.fighter2.position.x - battleCore.fighter1.position.x),
+
             rightTimeSinceNoAttack,
+            battleCore.fighter2.currentActionID,
+            battleCore.fighter2.currentActionFrame,
+            battleCore.fighter2.currentHitStunFrame,
+            battleCore.fighter2.guardHealth,
 
-            battleCore.fighter2.currentActionID == (float)CommonActionID.DAMAGE ? 1 : 0,
-            battleCore.fighter2.currentActionID == (int)CommonActionID.GUARD_BREAK ? 1 : 0,
-            battleCore.fighter2.currentActionID == (int)CommonActionID.GUARD_CROUCH
-                                                    || battleCore.fighter2.currentActionID == (int)CommonActionID.GUARD_STAND
-                                                    || battleCore.fighter2.currentActionID == (int)CommonActionID.GUARD_M ? 1 : 0,
-            battleCore.fighter2.currentActionID == (int)CommonActionID.N_ATTACK
-                                                    || battleCore.fighter2.currentActionID == (int)CommonActionID.B_ATTACK ? 1 : 0,
-            battleCore.fighter2.currentActionID == (int)CommonActionID.N_SPECIAL
-                                                    || battleCore.fighter2.currentActionID == (int)CommonActionID.B_SPECIAL ? 1 : 0,
-
-            battleCore.fighter1.currentActionID == (float)CommonActionID.DAMAGE ? 1 : 0,
-            battleCore.fighter1.currentActionID == (int)CommonActionID.GUARD_BREAK ? 1 : 0,
-            battleCore.fighter1.currentActionID == (int)CommonActionID.GUARD_CROUCH
-                                                    || battleCore.fighter1.currentActionID == (int)CommonActionID.GUARD_STAND
-                                                    || battleCore.fighter1.currentActionID == (int)CommonActionID.GUARD_M ? 1 : 0,
-            battleCore.fighter1.currentActionID == (int)CommonActionID.N_ATTACK
-                                                    || battleCore.fighter1.currentActionID == (int)CommonActionID.B_ATTACK ? 1 : 0,
-            battleCore.fighter1.currentActionID == (int)CommonActionID.N_SPECIAL
-                                                    || battleCore.fighter1.currentActionID == (int)CommonActionID.B_SPECIAL ? 1 : 0,
-
+            leftTimeSinceNoAttack,
+            battleCore.fighter1.currentActionID,
+            battleCore.fighter1.currentActionFrame,
+            battleCore.fighter1.currentHitStunFrame,
+            battleCore.fighter1.guardHealth,
         };
     }
 }

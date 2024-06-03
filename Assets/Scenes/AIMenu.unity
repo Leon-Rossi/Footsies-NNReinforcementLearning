@@ -2516,6 +2516,7 @@ GameObject:
   - component: {fileID: 843341345}
   - component: {fileID: 843341348}
   - component: {fileID: 843341347}
+  - component: {fileID: 843341349}
   - component: {fileID: 843341346}
   m_Layer: 0
   m_Name: Start
@@ -2589,10 +2590,10 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: MenuManager, Assembly-CSharp
-        m_MethodName: Load
-        m_Mode: 5
+      - m_Target: {fileID: 843341349}
+        m_TargetAssemblyTypeName: Footsies.UIEventAction, Assembly-CSharp
+        m_MethodName: InvokeAction
+        m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
@@ -2639,6 +2640,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 843341344}
   m_CullTransparentMesh: 0
+--- !u!114 &843341349
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 843341344}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 965cb0393c36c7049b2908e08cf077cc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  action: 7
 --- !u!1 &874428572
 GameObject:
   m_ObjectHideFlags: 0
@@ -4674,6 +4688,7 @@ GameObject:
   - component: {fileID: 1338544290}
   - component: {fileID: 1338544291}
   - component: {fileID: 1338544292}
+  - component: {fileID: 1338544293}
   m_Layer: 0
   m_Name: MenuManager
   m_TagString: Untagged
@@ -4723,6 +4738,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   selectedSafe: 0
   textField: {fileID: 1425833453}
+  generation: 0
+--- !u!114 &1338544293
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1338544288}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ef2b0b87b88bd8459c0b58bc102fdaa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1365933608
 GameObject:
   m_ObjectHideFlags: 0

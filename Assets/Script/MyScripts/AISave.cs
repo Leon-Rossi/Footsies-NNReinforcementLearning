@@ -57,6 +57,8 @@ public class AISave
 
     public void SetUpNextGeneration()
     {
+        allNeuralNetworks[allNeuralNetworks.Count()-1] = learningAlgorithm.SortListByFitness(allNeuralNetworks[allNeuralNetworks.Count()-1]);
+        
         bestNeuralNetworks.Add(learningAlgorithm.CreateSerializedCopy<List<List<List<List<float>>>>>(allNeuralNetworks.Last().Last()));
 
         allNeuralNetworks.Add(learningAlgorithm.CreateNewPopulation(populationCount, mutationFactor, mutationThreshhold, allNeuralNetworks.Last()));
@@ -76,7 +78,7 @@ public class AISave
     public void ReplaceLastGeneration(List<List<List<List<List<float>>>>> input)
     {
         allNeuralNetworks.RemoveAt(allNeuralNetworks.Count()-1);
-        allNeuralNetworks.Add(input);
+        allNeuralNetworks.Add(learningAlgorithm.CreateSerializedCopy<List<List<List<List<List<float>>>>>>(input));
     }
 
     public int[] GiveNN()

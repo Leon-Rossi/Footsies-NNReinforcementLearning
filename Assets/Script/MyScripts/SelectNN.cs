@@ -13,6 +13,8 @@ public class SelectNN : MonoBehaviour
     public Text textField;
 
     int speed;
+
+    public int generation;
     
     string textOutput;
     // Start is called before the first frame update
@@ -30,9 +32,7 @@ public class SelectNN : MonoBehaviour
 
     public void ReadGeneration(string input)
     {
-        speed = int.Parse(input);
-        aiControl.speed = speed;
-
+        generation = int.Parse(input);
     }
 
     public void ReadName(string input)

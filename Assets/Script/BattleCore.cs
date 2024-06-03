@@ -72,6 +72,8 @@ namespace Footsies
         public bool isNNTraining;
         private float timeSinceLastDeath;
 
+        int maxRoundTime = 30;
+
         private static uint maxRecordingInputFrame = 60 * 60 * 5;
         private InputData[] recordingP1Input = new InputData[maxRecordingInputFrame];
         private InputData[] recordingP2Input = new InputData[maxRecordingInputFrame];
@@ -106,13 +108,18 @@ namespace Footsies
                 roundUIAnimator = roundUI.GetComponent<Animator>();
             }
 
+            nNFighterController = GameObject.Find("NNFighterController").GetComponent<NNFighterController>();
+            
             if(GameManager.Instance.isNNTraining)
             {
-                nNFighterController = GameObject.Find("NNFighterController").GetComponent<NNFighterController>();
                 rightIsNN = true;
                 leftIsNN = true;
                 isNNTraining = true;
                 timeSinceLastDeath = 0;
+            }
+            else
+            {
+                rightIsNN = GameManager.Instance.isVsNN;
             }
         }
         
@@ -121,15 +128,19 @@ namespace Footsies
             if(isNNTraining)
             {
                 timeSinceLastDeath += Time.deltaTime;
-                if(timeSinceLastDeath > 10)
+                if(timeSinceLastDeath > maxRoundTime)
                 {
                     if(fighter2.guardHealth > fighter1.guardHealth)
                     {
-                        nNFighterController.NextNNDuel(true);
+                        nNFighterController.NextNNDuel(true, false, true);
+                    }
+                    else if(fighter1.guardHealth > fighter2.guardHealth)
+                    {
+                        nNFighterController.NextNNDuel(false, false, true);
                     }
                     else
                     {
-                        nNFighterController.NextNNDuel(false);
+                        nNFighterController.NextNNDuel(false, true);
                     }
 
                     fighter1.SetupBattleStart(fighterDataList[0], new Vector2(-2f, 0f), true);
@@ -228,8 +239,10 @@ namespace Footsies
 
                     roundUIAnimator.SetTrigger("RoundStart");
 
-                    if (GameManager.Instance.isVsCPU)
+                    if(GameManager.Instance.isVsCPU)
+                    {
                         battleAI = new BattleAI(this);
+                    }
 
                     break;
                 case RoundStateType.Fight:
@@ -274,21 +287,23 @@ namespace Footsies
 
                         else if (deadFighter[0] == fighter1 && isNNTraining)
                         {
-                            nNFighterController.NextNNDuel(false);
-                            fighter2.RequestWinAction();
+                            nNFighterController.NextNNDuel(true);
+                            //fighter2.RequestWinAction();
 
                             fighter1.SetupBattleStart(fighterDataList[0], new Vector2(-2f, 0f), true);
                             fighter2.SetupBattleStart(fighterDataList[0], new Vector2(2f, 0f), false);
+                            ChangeRoundState(RoundStateType.Fight);
 
                             timeSinceLastDeath = 0;
                         }
                         else if (deadFighter[0] == fighter2 && isNNTraining)
                         {
-                            nNFighterController.NextNNDuel(true);
-                            fighter1.RequestWinAction();
+                            nNFighterController.NextNNDuel(false);
+                            //fighter1.RequestWinAction();
 
                             fighter1.SetupBattleStart(fighterDataList[0], new Vector2(-2f, 0f), true);
                             fighter2.SetupBattleStart(fighterDataList[0], new Vector2(2f, 0f), false);
+                            ChangeRoundState(RoundStateType.Fight);
                             
                             timeSinceLastDeath = 0;
                         }
