@@ -62,8 +62,10 @@ public class NNFighterController : MonoBehaviour
             NNList = aiControl.AISaves[selectNN.selectedSafe].bestNeuralNetworks;
             isVsNN = true;
             NNRight = selectNN.generation;
-            Debug.Log("play");
-            Debug.Log(NNRight); 
+            if(NNRight == -1)
+            {
+                NNRight = NNList.Count - 1;
+            }
         }
 
         Time.timeScale = aiControl.speed;
@@ -73,10 +75,11 @@ public class NNFighterController : MonoBehaviour
     {
         int gameValue = winByGuard ? 3 : 30;
 
+        float WinExpectedRight = (float)(1/(1+ Math.Pow(10, (NNList[NNLeft][0][0][0][1] - NNList[NNRight][0][0][0][1])/ 400)));
+        float WinExpectedLeft = (float)(1/(1+ Math.Pow(10, (NNList[NNRight][0][0][0][1] - NNList[NNLeft][0][0][0][1])/ 400)));
+
         if(!draw)
         {
-            float WinExpectedRight = (float)(1/(1+ Math.Pow(10, (NNList[NNLeft][0][0][0][1] - NNList[NNRight][0][0][0][1])/ 400)));
-            float WinExpectedLeft = (float)(1/(1+ Math.Pow(10, (NNList[NNRight][0][0][0][1] - NNList[NNLeft][0][0][0][1])/ 400)));
             
             if(rightFighterWon)
             {
@@ -89,12 +92,22 @@ public class NNFighterController : MonoBehaviour
                 NNList[NNLeft][0][0][0][1] += gameValue * (1-WinExpectedLeft);
             }
         }
+        else
+        {
+            NNList[NNRight][0][0][0][1] += gameValue * (0.5f-WinExpectedRight);
+            NNList[NNLeft][0][0][0][1] += gameValue * (0.5f-WinExpectedLeft);
+        }
 
 
 
         if(listRun <= maxFightPerCapita -1)
         {
             NNRight = listPos;
+            while(NNList[NNRight][0][0][0][1] < 50)
+            {
+                listPos++;
+                NNRight = listPos;
+            }
 
             float smallestValue = 10000;
             for(int i = 0; i <= NNList.Count -1; i++)
@@ -103,10 +116,6 @@ public class NNFighterController : MonoBehaviour
                 {
                     NNLeft = i;
                     smallestValue = Math.Abs(NNList[NNRight][0][0][0][1] - NNList[i][0][0][0][1]);
-                    if(NNRight == i)
-                    {
-                        print("L");
-                    }
                 }
             }
 

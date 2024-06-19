@@ -72,7 +72,7 @@ public class GeneticAlgorithm : MonoBehaviour
             }
         }
 
-        output[0][0][0][1] = 300;
+        output[0][0][0][1] = 100;
 
         return output;
 
