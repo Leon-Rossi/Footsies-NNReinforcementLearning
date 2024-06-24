@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -61,7 +61,7 @@ namespace Footsies
 
         public void LoadVsCPUScene()
         {
-            isVsCPU = false;
+            isVsCPU = true;
             isVsNN = false;
             isNNTraining = false;
             LoadBattleScene();

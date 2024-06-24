@@ -18,6 +18,7 @@ namespace Footsies
             AIMenu,
             AITraining,
             PlayAI,
+            LoadMenu,
         }
 
         public Action action;
@@ -61,9 +62,17 @@ namespace Footsies
                 case Action.PlayAI:
                     LoadPlayAIScene();
                     break;
+                case Action.LoadMenu:
+                    LoadMenu();
+                    break;
 
 
             }
+        }
+
+        public void LoadMenu()
+        {
+            GameManager.Instance.LoadTitleScene();
         }
 
         public void LoadVsCPU()

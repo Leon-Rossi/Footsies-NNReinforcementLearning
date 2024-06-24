@@ -75,6 +75,8 @@ public class NNFighterController : MonoBehaviour
     {
         int gameValue = winByGuard ? 3 : 30;
 
+        print(NNRight + " " + NNLeft);
+
         float WinExpectedRight = (float)(1/(1+ Math.Pow(10, (NNList[NNLeft][0][0][0][1] - NNList[NNRight][0][0][0][1])/ 400)));
         float WinExpectedLeft = (float)(1/(1+ Math.Pow(10, (NNList[NNRight][0][0][0][1] - NNList[NNLeft][0][0][0][1])/ 400)));
 
@@ -98,14 +100,27 @@ public class NNFighterController : MonoBehaviour
             NNList[NNLeft][0][0][0][1] += gameValue * (0.5f-WinExpectedLeft);
         }
 
-
-
         if(listRun <= maxFightPerCapita -1)
         {
             NNRight = listPos;
             while(NNList[NNRight][0][0][0][1] < 50)
             {
                 listPos++;
+                
+                if(listPos >= NNList.Count)
+                {
+                    listPos = 0;
+                    listRun ++;
+
+                    if(listRun <= maxFightPerCapita -1)
+                    {
+                        StartNextGeneration();
+                        listPos = 0;
+                        listRun = 0;
+                        return;
+                    }
+                }
+
                 NNRight = listPos;
             }
 
