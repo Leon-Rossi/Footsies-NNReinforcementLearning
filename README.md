@@ -1,1 +1,2 @@
-12.05.2024
+This project is based on "https://github.com/hifight/Footsies"
+
