@@ -68,14 +68,15 @@ public class NeuralNetworkController : MonoBehaviour
             node.Add(new List<float>());
 
             node[0].Add(RandomValue());
+            node[0].Add(0);
+            node[0].Add(0);
             
             foreach(int i in Enumerable.Range(1, layerSize))
             {
                 node[1].Add(RandomValue());
             }
         }
-                
-        nN[0][0][0].Add(300);
+
         return nN;
     }
 
@@ -111,4 +112,30 @@ public class NeuralNetworkController : MonoBehaviour
             return -UnityEngine.Random.value * 6;
         }
     }
-}
+
+    public List<float> NNForwardPass(List<List<List<List<float>>>> nN, List<float> input, ActivationFunctions selectedActivationFunction)
+    {
+        List<float> currentInput = new List<float>();
+        List<float> nextInput = new List<float>(input); 
+
+        foreach(List<List<List<float>>> layer in nN)
+        {
+            currentInput = new List<float>(nextInput);
+
+            nextInput.Clear();
+
+            foreach(List<List<float>> node in layer)
+            {
+                float output = node[1].Zip(currentInput, (x, y) => x * y).Sum() + node[0][0];
+                
+                node[0][2] = (float)(Math.Exp(output)/(1+Math.Exp(output)));
+                nextInput.Add((float)(Math.Exp(output)/(1+Math.Exp(output))));
+            }
+        }
+        return nextInput;
+    }
+
+    public void SetPartialDerivatives(List<List<List<List<float>>>> nN, float learningRate, )
+    {
+
+    }
