@@ -105,17 +105,6 @@ public class NeuralNetworkController : MonoBehaviour
         return nextInput;
     }
 
-    float RandomValue()
-    {
-        if(UnityEngine.Random.value > 0.5)
-        {
-            return UnityEngine.Random.value * 6;
-        }
-        else
-        {
-            return -UnityEngine.Random.value * 6;
-        }
-    }
 
     public List<float> NNForwardPass(List<List<List<List<float>>>> nN, List<float> input, ActivationFunctions selectedActivationFunction)
     {
@@ -140,7 +129,7 @@ public class NeuralNetworkController : MonoBehaviour
         return nextInput;
     }
 
-    public void SetPartialDerivatives(List<List<List<List<float>>>> nN, float learningRate, int relevantOutput = 0)
+    public List<List<List<List<float>>>> SetPartialDerivatives(List<List<List<List<float>>>> nN, float learningRate, int relevantOutput = 0)
     {
         foreach(List<List<float>> node in nN.Last())
         {
@@ -172,6 +161,34 @@ public class NeuralNetworkController : MonoBehaviour
 
                 node[0][1] = preSigmoidDerivative;
             }
+        }
+
+        return nN;
+    }
+
+    public float OneStopMethod(List<List<List<List<float>>>> nN, float toBeAddedValue)
+    {
+        foreach(List<List<List<float>>> layer in nN)
+        {
+            foreach(List<List<float>> node in layer)
+            {
+                for(int i = 0; i < node.Count; i++)
+                {
+                    weight += 
+                }
+            }
+        }
+    }
+
+    float RandomValue()
+    {
+        if(UnityEngine.Random.value > 0.5)
+        {
+            return UnityEngine.Random.value * 6;
+        }
+        else
+        {
+            return -UnityEngine.Random.value * 6;
         }
     }
 
