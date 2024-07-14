@@ -172,9 +172,9 @@ public class NeuralNetworkController : MonoBehaviour
         {
             foreach(List<List<float>> node in layer)
             {
-                for(int i = 0; i < node.Count; i++)
+                for(int i = 0; i < node[1].Count; i++)
                 {
-                    weight += 
+                    node[1][i] += toBeAddedValue * node[2][i];
                 }
             }
         }
