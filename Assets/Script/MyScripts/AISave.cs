@@ -12,105 +12,56 @@ public class AISave
 {
     [JsonIgnore] GeneticAlgorithm learningAlgorithm;
     [JsonIgnore] AIControl aIControl;
+    [JsonIgnore] NeuralNetworkController neuralNetworkController;
 
     public string saveName;
-    public float mutationFactor;
-    public float mutationThreshhold;
-    public int populationCount;
 
-    public int layerCount;
-    public int layerSize;
-    public int inputCount;
-    public int outputCount;
+    public float policyLearningRate;
+    public int policyLayerCount;
+    public int policyLayerSize;
+    public int policyInputCount;
+    public int policyoutputCount;
+    
+    public float valueLearningRate;
+    public int valueLayerCount;
+    public int valueLayerSize;
+    public int valueInputCount;
+    public int valueOutputCount;
 
-    public int[] currentNN = new int[2];
+    public List<List<List<List<float>>>> policyNN = new List<List<List<List<float>>>>();
+    public List<List<List<List<float>>>> valueNN = new List<List<List<List<float>>>>();
 
-    public List<List<List<List<List<List<float>>>>>> allNeuralNetworks = new List<List<List<List<List<List<float>>>>>>();
-    public List<List<List<List<List<float>>>>> bestNeuralNetworks = new List<List<List<List<List<float>>>>>();
+    public List<List<List<List<List<float>>>>> oldPolicyNNs = new List<List<List<List<List<float>>>>>();
 
-    public AISave(float mutationFactorFloat, float mutationThreshholdFloat, int populationCountInt, int layerCountInt, int layerSizeInt, int inputCountInt, int outputCountInt, string NameString)
+    public AISave(string nameString, float policyLearningRateInput, int policyLayerCountInput, int policyLayerSizeInput, int policyInputCountInput, int policyoutputCountInput, float valueLearningRateInput, int valueLayerCountInput, int valueLayerSizeInput, int valueInputCountInput, int valueOutputCountInput)
     {
-        mutationFactor = mutationFactorFloat;
-        mutationThreshhold = mutationThreshholdFloat;
-        populationCount = populationCountInt;
-        layerSize = layerSizeInt;
-        layerCount = layerCountInt;
-        inputCount = inputCountInt;
-        outputCount = outputCountInt;
-        saveName = NameString;
+        policyLearningRate = policyLearningRateInput;
+        policyLayerSize = policyLayerSizeInput;
+        policyLayerCount = policyLayerCountInput;
+        policyInputCount = policyInputCountInput;
+        policyOutputCount = policyOutputCountInput;
+        
+        valueLearningRate = valueLearningRateInput;
+        valueLayerSize = valueLayerSizeInput;
+        valueLayerCount = valueLayerCountInput;
+        valueInputCount = valueInputCountInput;
+        valueOutputCount = valueOutputCountInput;
+
+        SaveName = nameString;
 
         learningAlgorithm = GameObject.Find("GameMaster").GetComponent<GeneticAlgorithm>();
         aIControl = GameObject.Find("GameMaster").GetComponent<AIControl>();
-        SetUpFirstGeneration();
+        neuralNetworkController = GameObject.Find("GameMaster").GetComponent<NeuralNetworkController>();
 
+        policyNN = neuralNetworkController.CreateNN(policyLayerSize, policyLayerCount, policyInputCount, policyOutputCount, valueLayerSize, valueLayerCount, valueInputCount, valueOutputCount);
+        valueNN = neuralNetworkController.CreateNN(valueLayerSize, valueLayerCount, valueInputCount, valueOutputCount, policyLayerSize, policyLayerCount, policyInputCount, policyOutputCount);
     }
 
-    public void SetUpFirstGeneration()
+    private void Awake()
     {
-        allNeuralNetworks.Add(new List<List<List<List<List<float>>>>>());
-
-        foreach(int i in Enumerable.Range(1, populationCount))
-        {
-            allNeuralNetworks[0].Add(GameObject.Find("GameMaster").GetComponent<NeuralNetworkController>().CreateNN(layerCount, layerSize, inputCount, outputCount));
-        }
+        learningAlgorithm = GameObject.Find("GameMaster").GetComponent<GeneticAlgorithm>();
+        aIControl = GameObject.Find("GameMaster").GetComponent<AIControl>();
+        neuralNetworkController = GameObject.Find("GameMaster").GetComponent<NeuralNetworkController>();
     }
 
-    public void SetUpNextGeneration()
-    {
-        allNeuralNetworks[allNeuralNetworks.Count()-1] = learningAlgorithm.SortListByFitness(allNeuralNetworks[allNeuralNetworks.Count()-1]);
-        
-        bestNeuralNetworks.Add(learningAlgorithm.CreateSerializedCopy<List<List<List<List<float>>>>>(allNeuralNetworks.Last().Last()));
-
-        allNeuralNetworks.Add(learningAlgorithm.CreateNewPopulation(populationCount, mutationFactor, mutationThreshhold, allNeuralNetworks.Last()));
-
-        allNeuralNetworks[allNeuralNetworks.Count()-2].Clear();
-        currentNN[0] = allNeuralNetworks.Count()-1;
-        currentNN[1] = 0;
-
-        Debug.Log("Current Gen nr.: " + currentNN[0]);
-    }
-
-    public List<List<List<List<List<float>>>>> GiveLastGeneration()
-    {
-        return allNeuralNetworks.Last();
-    }
-
-    public void ReplaceLastGeneration(List<List<List<List<List<float>>>>> input)
-    {
-        allNeuralNetworks.RemoveAt(allNeuralNetworks.Count()-1);
-        allNeuralNetworks.Add(learningAlgorithm.CreateSerializedCopy<List<List<List<List<List<float>>>>>>(input));
-    }
-
-    public int[] GiveNN()
-    {
-        return currentNN;
-    }
-
-    public int[] GiveNextNN()
-    {
-        if(currentNN[1] >= populationCount-1)
-        {
-            Debug.Log("Next Gen");
-            SetUpNextGeneration();
-            aIControl.SaveFile();
-        }
-        else
-        {
-            currentNN[1] += 1; 
-        }
-
-        Debug.Log("Current Population nr.: " + currentNN[1]);
-
-        return currentNN;
-    }
-
-    public List<List<List<List<float>>>> GiveNNFromIndex(int[] index)
-    {
-        return allNeuralNetworks[index[0]][index[1]];
-    }
-
-    public void SetFitnessScore(int[] index, float fitnessScore)
-    {
-        allNeuralNetworks[index[0]][index[1]][0][0][0][1] = fitnessScore;
-    }
 }
