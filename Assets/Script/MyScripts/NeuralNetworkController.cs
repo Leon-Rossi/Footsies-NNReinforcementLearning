@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 using System;
+using UnityEditor.Experimental.GraphView;
 
 public class NeuralNetworkController : MonoBehaviour
 {
@@ -31,6 +32,7 @@ public class NeuralNetworkController : MonoBehaviour
 
             foreach(List<List<float>> node in layer)
             {
+                node.Add(new List<float>());
                 node.Add(new List<float>());
                 node.Add(new List<float>());
 
@@ -66,16 +68,19 @@ public class NeuralNetworkController : MonoBehaviour
         {
             node.Add(new List<float>());
             node.Add(new List<float>());
+            node.Add(new List<float>());
 
             node[0].Add(RandomValue());
+            node[0].Add(0);
+            node[0].Add(0);
             
             foreach(int i in Enumerable.Range(1, layerSize))
             {
                 node[1].Add(RandomValue());
             }
+
         }
-                
-        nN[0][0][0].Add(300);
+
         return nN;
     }
 
@@ -94,10 +99,85 @@ public class NeuralNetworkController : MonoBehaviour
             {
                 float output = node[1].Zip(currentInput, (x, y) => x * y).Sum() + node[0][0];
                 
-                nextInput.Add((float)(Math.Exp(output)/(1+Math.Exp(output))));
+                nextInput.Add(Sigmoid(output));
             }
         }
         return nextInput;
+    }
+
+
+    public List<float> NNForwardPass(List<List<List<List<float>>>> nN, List<float> input, ActivationFunctions selectedActivationFunction)
+    {
+        List<float> currentInput = new List<float>();
+        List<float> nextInput = new List<float>(input); 
+
+        foreach(List<List<List<float>>> layer in nN)
+        {
+            currentInput = new List<float>(nextInput);
+
+            nextInput.Clear();
+
+            foreach(List<List<float>> node in layer)
+            {
+                float output = node[1].Zip(currentInput, (x, y) => x * y).Sum() + node[0][0];
+                
+                node[0][2] = output;
+                node[0][3] = Sigmoid(output);
+                nextInput.Add(Sigmoid(output));
+            }
+        }
+        return nextInput;
+    }
+
+    public List<List<List<List<float>>>> SetPartialDerivatives(List<List<List<List<float>>>> nN, float learningRate, int relevantOutput = 0)
+    {
+        foreach(List<List<float>> node in nN.Last())
+        {
+            node[0][1] = 0;
+        }
+        nN.Last()[relevantOutput][0][1] = 1;
+        
+        for(int i = nN.Count - 1; i >= 0; i--)
+        {
+            foreach(List<List<float>> node in nN[i])
+            {
+                float postSigmoidDerivative = node[0][1];
+                float preSigmoidDerivative = postSigmoidDerivative * DerivativeOfSigmoid(node[0][2]);
+                
+                node[2].Clear();
+
+                if(i > 0)
+                {
+                    foreach(List<List<float>> targetNode in nN[i-1])
+                    {
+                        node[2].Add(targetNode[0][3] * preSigmoidDerivative);
+                    }
+
+                    for(int j = 0; j <= nN[i-1].Count - 1; i++) 
+                    {
+                        nN[i][j][0][1] += node[2][j] * preSigmoidDerivative;
+                    }
+                }
+
+                node[0][1] = preSigmoidDerivative;
+            }
+        }
+
+        return nN;
+    }
+
+    public float OneStopMethod(List<List<List<List<float>>>> nN, float toBeAddedValue)
+    {
+        foreach(List<List<List<float>>> layer in nN)
+        {
+            foreach(List<List<float>> node in layer)
+            {
+                for(int i = 0; i < node[1].Count; i++)
+                {
+                    node[1][i] += toBeAddedValue * node[2][i];
+                }
+            }
+        }
     }
 
     float RandomValue()
@@ -110,5 +190,15 @@ public class NeuralNetworkController : MonoBehaviour
         {
             return -UnityEngine.Random.value * 6;
         }
+    }
+
+    float DerivativeOfSigmoid(float input)
+    {
+        return Sigmoid(input) * (1 - Sigmoid(input));
+    }
+
+    float Sigmoid(float input)
+    {
+        return (float)(1 /(1+Math.Exp(-input)));
     }
 }
