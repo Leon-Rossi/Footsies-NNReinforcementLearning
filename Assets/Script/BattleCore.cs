@@ -1,8 +1,5 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEditor;
+﻿using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Events;
 
 namespace Footsies
 {
@@ -71,6 +68,8 @@ namespace Footsies
         public bool leftIsNN;
         public bool isNNTraining;
         private float timeSinceLastDeath;
+        public int leftTotalReward;
+        public int rightTotalReward;
 
         int maxRoundTime = 30;
 
@@ -91,6 +90,9 @@ namespace Footsies
         private float koStateTime = 2f;
         private float endStateTime = 3f;
         private float endStateSkippableTime = 1.5f;
+
+        private float fighter1LastGuard;
+        private float fighter2LastGuard;
 
         void Awake()
         {
@@ -130,19 +132,6 @@ namespace Footsies
                 timeSinceLastDeath += Time.deltaTime;
                 if(timeSinceLastDeath > maxRoundTime)
                 {
-                    if(fighter2.guardHealth > fighter1.guardHealth)
-                    {
-                        nNFighterController.NextNNDuel(true, false, true);
-                    }
-                    else if(fighter1.guardHealth > fighter2.guardHealth)
-                    {
-                        nNFighterController.NextNNDuel(false, false, true);
-                    }
-                    else
-                    {
-                        nNFighterController.NextNNDuel(false, true);
-                    }
-
                     fighter1.SetupBattleStart(fighterDataList[0], new Vector2(-2f, 0f), true);
                     fighter2.SetupBattleStart(fighterDataList[0], new Vector2(2f, 0f), false);
 
@@ -287,7 +276,9 @@ namespace Footsies
 
                         else if (deadFighter[0] == fighter1 && isNNTraining)
                         {
-                            nNFighterController.NextNNDuel(true);
+                            leftTotalReward += 20;
+                            rightTotalReward -= 20;
+
                             //fighter2.RequestWinAction();
 
                             fighter1.SetupBattleStart(fighterDataList[0], new Vector2(-2f, 0f), true);
@@ -298,7 +289,8 @@ namespace Footsies
                         }
                         else if (deadFighter[0] == fighter2 && isNNTraining)
                         {
-                            nNFighterController.NextNNDuel(false);
+                            rightTotalReward += 20;
+                            leftTotalReward -= 20;
                             //fighter1.RequestWinAction();
 
                             fighter1.SetupBattleStart(fighterDataList[0], new Vector2(-2f, 0f), true);
@@ -349,6 +341,13 @@ namespace Footsies
             UpdatePushCharacterVsCharacter();
             UpdatePushCharacterVsBackground();
             UpdateHitboxHurtboxCollision();
+
+            CheckGuardReward()
+        }
+
+        void CheckGuardReward()
+        {
+
         }
 
         void UpdateKOState()
@@ -381,7 +380,7 @@ namespace Footsies
 
             if(leftIsNN)
             {
-                p1Input.input = nNFighterController.RunLeftNN();
+                p1Input.input = nNFighterController.RunNN(true);
             }
             else
             {
@@ -416,7 +415,7 @@ namespace Footsies
             }
             else if(rightIsNN)
             {
-                p2Input.input = nNFighterController.RunRightNN();
+                p2Input.input = nNFighterController.RunNN(false);
             }
             else
             {

@@ -1,11 +1,8 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System.Linq;
-using System.Numerics;
 using System;
 using Newtonsoft.Json;
-using System.Runtime.InteropServices;
+using System.IO;
 
 [Serializable]
 public class AISave
@@ -20,7 +17,7 @@ public class AISave
     public int policyLayerCount;
     public int policyLayerSize;
     public int policyInputCount;
-    public int policyoutputCount;
+    public int policyOutputCount;
     
     public float valueLearningRate;
     public int valueLayerCount;
@@ -33,7 +30,7 @@ public class AISave
 
     public List<List<List<List<List<float>>>>> oldPolicyNNs = new List<List<List<List<List<float>>>>>();
 
-    public AISave(string nameString, float policyLearningRateInput, int policyLayerCountInput, int policyLayerSizeInput, int policyInputCountInput, int policyoutputCountInput, float valueLearningRateInput, int valueLayerCountInput, int valueLayerSizeInput, int valueInputCountInput, int valueOutputCountInput)
+    public AISave(string nameString, float policyLearningRateInput, int policyLayerCountInput, int policyLayerSizeInput, int policyInputCountInput, int policyOutputCountInput, float valueLearningRateInput, int valueLayerCountInput, int valueLayerSizeInput, int valueInputCountInput, int valueOutputCountInput)
     {
         policyLearningRate = policyLearningRateInput;
         policyLayerSize = policyLayerSizeInput;
@@ -47,14 +44,14 @@ public class AISave
         valueInputCount = valueInputCountInput;
         valueOutputCount = valueOutputCountInput;
 
-        SaveName = nameString;
+        saveName = nameString;
 
         learningAlgorithm = GameObject.Find("GameMaster").GetComponent<GeneticAlgorithm>();
         aIControl = GameObject.Find("GameMaster").GetComponent<AIControl>();
         neuralNetworkController = GameObject.Find("GameMaster").GetComponent<NeuralNetworkController>();
 
-        policyNN = neuralNetworkController.CreateNN(policyLayerSize, policyLayerCount, policyInputCount, policyOutputCount, valueLayerSize, valueLayerCount, valueInputCount, valueOutputCount);
-        valueNN = neuralNetworkController.CreateNN(valueLayerSize, valueLayerCount, valueInputCount, valueOutputCount, policyLayerSize, policyLayerCount, policyInputCount, policyOutputCount);
+        policyNN = neuralNetworkController.CreateNN(policyLayerSize, policyLayerCount, policyInputCount, policyOutputCount);
+        valueNN = neuralNetworkController.CreateNN(valueLayerSize, valueLayerCount, valueInputCount, valueOutputCount);
     }
 
     private void Awake()
@@ -64,4 +61,40 @@ public class AISave
         neuralNetworkController = GameObject.Find("GameMaster").GetComponent<NeuralNetworkController>();
     }
 
+    public void AddCurrentPolicyToOldPolicyNNs()
+    {
+        oldPolicyNNs.Add(CreateSerializedCopy(policyNN));
+    }
+
+    // Deep Cloning Lists based on https://stackoverflow.com/questions/27208411/how-to-clone-multidimensional-array-without-reference-correctly
+    /// <summary>
+    /// This method clones all of the items and serializable properties of the current collection by 
+    /// serializing the current object to memory, then deserializing it as a new object. This will 
+    /// ensure that all references are cleaned up.
+    /// </summary>
+    /// <returns></returns>
+    /// <remarks></remarks>
+    public T CreateSerializedCopy<T>(T oRecordToCopy)
+    {
+        // Exceptions are handled by the caller
+
+        if (oRecordToCopy == null)
+        {
+            return default(T);
+        }
+
+        if (!oRecordToCopy.GetType().IsSerializable)
+        {
+            throw new ArgumentException(oRecordToCopy.GetType().ToString() + " is not serializable");
+        }
+
+        var oFormatter = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
+
+        using (var oStream = new MemoryStream())
+        {
+            oFormatter.Serialize(oStream, oRecordToCopy);
+            oStream.Position = 0;
+            return (T)oFormatter.Deserialize(oStream);
+        }
+    }
 }
