@@ -13,6 +13,7 @@ public class AISave
 
     public string saveName;
 
+    public float decayRate;
     public float policyLearningRate;
     public int policyLayerCount;
     public int policyLayerSize;
@@ -30,20 +31,22 @@ public class AISave
 
     public List<List<List<List<List<float>>>>> oldPolicyNNs = new List<List<List<List<List<float>>>>>();
 
-    public AISave(string nameString, float policyLearningRateInput, int policyLayerCountInput, int policyLayerSizeInput, int policyInputCountInput, int policyOutputCountInput, float valueLearningRateInput, int valueLayerCountInput, int valueLayerSizeInput, int valueInputCountInput, int valueOutputCountInput)
+    public AISave(string nameString, float decayRateInput, float policyLearningRateInput, int policyLayerCountInput, int policyLayerSizeInput, int policyInputCountInput, int policyOutputCountInput, float valueLearningRateInput, int valueLayerCountInput, int valueLayerSizeInput, int valueInputCountInput, int valueOutputCountInput)
     {
+        
         policyLearningRate = policyLearningRateInput;
         policyLayerSize = policyLayerSizeInput;
         policyLayerCount = policyLayerCountInput;
         policyInputCount = policyInputCountInput;
         policyOutputCount = policyOutputCountInput;
-        
+
         valueLearningRate = valueLearningRateInput;
         valueLayerSize = valueLayerSizeInput;
         valueLayerCount = valueLayerCountInput;
         valueInputCount = valueInputCountInput;
         valueOutputCount = valueOutputCountInput;
 
+        decayRate = decayRateInput;
         saveName = nameString;
 
         learningAlgorithm = GameObject.Find("GameMaster").GetComponent<GeneticAlgorithm>();

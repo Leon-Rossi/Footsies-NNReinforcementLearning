@@ -12,9 +12,11 @@ public class NNFighterController : MonoBehaviour
     BattleCore battleCore;
     SelectNN selectNN;
 
-    float decay = 1;
-    float totalDecay = 1;
-    float learningRate = 0.05f;
+    float decayRate = 1;
+    float policyLearningRate = 0.05f;
+    float policyTotalDecay = 1;
+
+    float valueLearningRate;
 
     int currentAISave;
 
@@ -37,8 +39,8 @@ public class NNFighterController : MonoBehaviour
     bool rightAction;
     float rightLastStateValue;
 
-    float leftTimeSinceNoAttack;
-    float rightTimeSinceNoAttack;
+    float leftTimeSinceNoAttack = 0;
+    float rightTimeSinceNoAttack = 0;
 
     bool isVsNN;
     private List<float> output;
@@ -53,6 +55,10 @@ public class NNFighterController : MonoBehaviour
         selectNN = GameObject.Find("MenuManager").GetComponent<SelectNN>();
 
         currentAISave = aiControl.currentAISave;
+        decayRate = aiControl.AISaves[currentAISave].decayRate;
+        policyLearningRate = aiControl.AISaves[currentAISave].policyLearningRate;
+
+        valueLearningRate = aiControl.AISaves[currentAISave].valueLearningRate;
 
         if(GameManager.Instance.isVsNN)
         {
@@ -61,9 +67,11 @@ public class NNFighterController : MonoBehaviour
 
         Time.timeScale = aiControl.speed;
 
-        leftLastStateValue = neuralNetworkController.RunNN(valueNN, GetInput(true), NeuralNetworkController.ActivationFunctions.Sigmoid)[0];
-        rightLastStateValue = neuralNetworkController.RunNN(valueNN, GetInput(false), NeuralNetworkController.ActivationFunctions.Sigmoid)[0];
+        leftLastStateValue = 0;
+        rightLastStateValue = 0;
 
+        policyNN = aiControl.AISaves[currentAISave].policyNN;
+        valueNN = aiControl.AISaves[currentAISave].valueNN;
     }
 
     public int RunNN(bool isLeftFighter)
@@ -76,42 +84,47 @@ public class NNFighterController : MonoBehaviour
         {
             var outputVar = neuralNetworkController.RunNNAndSave(policyNN, GetInput(isLeftFighter), NeuralNetworkController.ActivationFunctions.Sigmoid);
             output = outputVar.output;
-            List<List<List<float>>> lastCalculation = outputVar.calculations;
+            lastCalculation = outputVar.calculations;
         }
 
         double[] outputArray = SoftMaxFunction(output);
 
-        double x = 0;
+        double x = UnityEngine.Random.value;
         int chosenAction = -1;
         while(x > 0)
         {
             chosenAction ++;
             x -= outputArray[chosenAction];
         }
+        print(outputArray.Count());
+        print(chosenAction);
 
-        if(isLeftFighter)
+        if(!isVsNN)
         {
-            leftLastCalculation = lastCalculation;
-            leftLastOutputResult = chosenAction;
-            leftLastOutputProbability = outputArray[chosenAction];
-            leftAction = true;
-            leftTimeSinceNoAttack = chosenAction >= 4? leftTimeSinceNoAttack ++ : 0;
-        }
-        else
-        {
-            rightLastCalculation = lastCalculation;
-            rightLastOutputResult = chosenAction;
-            rightLastOutputProbability = outputArray[chosenAction];
-            rightAction = true;
-            rightTimeSinceNoAttack = chosenAction >= 4? rightTimeSinceNoAttack ++ : 0;
-        }
+            if(isLeftFighter)
+            {
+                leftLastCalculation = lastCalculation;
+                leftLastOutputResult = chosenAction;
+                leftLastOutputProbability = outputArray[chosenAction];
+                leftAction = true;
+                leftTimeSinceNoAttack = chosenAction >= 4? leftTimeSinceNoAttack ++ : 0;
+            }
+            else
+            {
+                rightLastCalculation = lastCalculation;
+                rightLastOutputResult = chosenAction;
+                rightLastOutputProbability = outputArray[chosenAction];
+                rightAction = true;
+                rightTimeSinceNoAttack = chosenAction >= 4? rightTimeSinceNoAttack ++ : 0;
+            }
 
-        if(leftAction && rightAction)
-        {
-            leftAction = false;
-            rightAction = false;
-
-            TrainNNS();        
+            if(leftAction && rightAction)
+            {
+                leftAction = false;
+                rightAction = false;
+                
+                TrainNNS();        
+            }
         }
 
         return chosenAction;
@@ -119,31 +132,30 @@ public class NNFighterController : MonoBehaviour
 
     public void TrainNNS()
     {
-        //Policy NN
         var leftVar = neuralNetworkController.RunNNAndSave(valueNN, GetInput(true), NeuralNetworkController.ActivationFunctions.Sigmoid);
         float leftThisStateValue = leftVar.output[0];
-        float leftAdvantage = decay * leftThisStateValue - leftLastStateValue + Reward(true);
+        float leftAdvantage = decayRate * leftThisStateValue - leftLastStateValue + Reward(true);
 
         policyNN = neuralNetworkController.SetPartialDerivatives(policyNN, leftLastCalculation, leftLastOutputResult, true);
-        policyNN = neuralNetworkController.OneStopMethod(policyNN, (float)(learningRate *totalDecay * leftAdvantage / leftLastOutputProbability));
+        policyNN = neuralNetworkController.OneStopMethod(policyNN, (float)(policyLearningRate *policyTotalDecay * leftAdvantage / leftLastOutputProbability));
 
         valueNN = neuralNetworkController.SetPartialDerivatives(valueNN, leftVar.calculations);
-        valueNN = neuralNetworkController.OneStopMethod(valueNN, learningRate * leftAdvantage);
+        valueNN = neuralNetworkController.OneStopMethod(valueNN, valueLearningRate * leftAdvantage);
         
         var rightVar = neuralNetworkController.RunNNAndSave(valueNN, GetInput(false), NeuralNetworkController.ActivationFunctions.Sigmoid);
         float rightThisStateValue = rightVar.output[0];
-        float rightAdvantage = decay * rightThisStateValue - rightLastStateValue + Reward(false);
+        float rightAdvantage = decayRate * rightThisStateValue - rightLastStateValue + Reward(false);
 
         policyNN = neuralNetworkController.SetPartialDerivatives(policyNN, rightLastCalculation, rightLastOutputResult, true);
-        policyNN = neuralNetworkController.OneStopMethod(policyNN, (float)(learningRate *totalDecay * rightAdvantage / rightLastOutputProbability));
+        policyNN = neuralNetworkController.OneStopMethod(policyNN, (float)(policyLearningRate *policyTotalDecay * rightAdvantage / rightLastOutputProbability));
 
         valueNN = neuralNetworkController.SetPartialDerivatives(valueNN, rightVar.calculations);
-        valueNN = neuralNetworkController.OneStopMethod(valueNN, learningRate * rightAdvantage);
+        valueNN = neuralNetworkController.OneStopMethod(valueNN, valueLearningRate * rightAdvantage);
 
         leftLastStateValue = leftThisStateValue;
         rightLastStateValue = rightThisStateValue;
 
-        totalDecay *= decay;
+        policyTotalDecay *= decayRate;
     }
 
     private float Reward(bool isLeftFighter)
@@ -163,17 +175,19 @@ public class NNFighterController : MonoBehaviour
         return new List<float>(){
             Convert.ToInt32(isLeftFighter),
 
-            Math.Abs(battleCore.fighter2.position.x - battleCore.fighter1.position.x),
-
             leftTimeSinceNoAttack,
+            battleCore.fighter1.position.x,
             battleCore.fighter1.currentActionID,
             battleCore.fighter1.currentActionFrame,
+            battleCore.fighter1.currentActionFrameCount,
             battleCore.fighter1.currentHitStunFrame,
             battleCore.fighter1.guardHealth,
 
             rightTimeSinceNoAttack,
+            battleCore.fighter2.position.x,
             battleCore.fighter2.currentActionID,
             battleCore.fighter2.currentActionFrame,
+            battleCore.fighter2.currentActionFrameCount,
             battleCore.fighter2.currentHitStunFrame,
             battleCore.fighter2.guardHealth,
         };
@@ -182,10 +196,10 @@ public class NNFighterController : MonoBehaviour
     //https://gist.github.com/jogleasonjr/55641e503142be19c9d3692b6579f221
     double[] SoftMaxFunction(List<float> input)
     {
-    double[] inputArray = Array.ConvertAll(input.ToArray(), x => (double)x);
-	var inputArray_exp = inputArray.Select(Math.Exp);
-	var sum_inputArray_exp = inputArray_exp.Sum();
+        double[] inputArray = Array.ConvertAll(input.ToArray(), x => (double)x);
+        var inputArray_exp = inputArray.Select(Math.Exp);
+        var sum_inputArray_exp = inputArray_exp.Sum();
 
-	return (double[])inputArray_exp.Select(i => i / sum_inputArray_exp);
+        return inputArray_exp.Select(i => i / sum_inputArray_exp).ToArray();
     }
 }

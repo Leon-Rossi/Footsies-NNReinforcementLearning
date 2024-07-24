@@ -91,8 +91,8 @@ namespace Footsies
         private float endStateTime = 3f;
         private float endStateSkippableTime = 1.5f;
 
-        private float fighter1LastGuard;
-        private float fighter2LastGuard;
+        private int fighter1LastGuard;
+        private int fighter2LastGuard;
 
         void Awake()
         {
@@ -276,8 +276,8 @@ namespace Footsies
 
                         else if (deadFighter[0] == fighter1 && isNNTraining)
                         {
-                            leftTotalReward += 20;
-                            rightTotalReward -= 20;
+                            leftTotalReward += 40;
+                            rightTotalReward -= 40;
 
                             //fighter2.RequestWinAction();
 
@@ -289,8 +289,8 @@ namespace Footsies
                         }
                         else if (deadFighter[0] == fighter2 && isNNTraining)
                         {
-                            rightTotalReward += 20;
-                            leftTotalReward -= 20;
+                            rightTotalReward += 40;
+                            leftTotalReward -= 40;
                             //fighter1.RequestWinAction();
 
                             fighter1.SetupBattleStart(fighterDataList[0], new Vector2(-2f, 0f), true);
@@ -342,11 +342,25 @@ namespace Footsies
             UpdatePushCharacterVsBackground();
             UpdateHitboxHurtboxCollision();
 
-            CheckGuardReward()
+            CheckGuardReward();
         }
 
         void CheckGuardReward()
         {
+            if(fighter2LastGuard != fighter2.guardHealth && fighter2.guardHealth != 3)
+            {
+                leftTotalReward += 5;
+                rightTotalReward -= 5;
+            }
+
+            if(fighter1LastGuard != fighter1.guardHealth && fighter1.guardHealth != 3)
+            {
+                leftTotalReward -= 5;
+                rightTotalReward += 5;
+            }
+
+            fighter1LastGuard = fighter1.guardHealth;
+            fighter2LastGuard = fighter2.guardHealth;
 
         }
 

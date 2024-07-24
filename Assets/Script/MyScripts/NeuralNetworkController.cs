@@ -36,6 +36,7 @@ public class NeuralNetworkController : MonoBehaviour
                 node.Add(new List<float>());
 
                 node[0].Add(RandomValue());
+                node[0].Add(0);
                 
                 if(layer != nN[0])
                 {
@@ -111,7 +112,14 @@ public class NeuralNetworkController : MonoBehaviour
         List<float> nextInput = new List<float>(input);
 
         List<List<List<float>>> calculations = new List<List<List<float>>>();
-        
+        calculations.Add(new List<List<float>>());
+
+        foreach(float inputValue in input)
+        {
+            calculations[0].Add(new List<float>());
+            calculations[^1][^1].Add(inputValue);
+            calculations[^1][^1].Add(Sigmoid(inputValue));
+        }
 
         foreach(List<List<List<float>>> layer in nN)
         {
@@ -123,12 +131,12 @@ public class NeuralNetworkController : MonoBehaviour
 
             foreach(List<List<float>> node in layer)
             {
-                calculations.Last().Add(new List<float>());
+                calculations[^1].Add(new List<float>());
 
                 float output = node[1].Zip(currentInput, (x, y) => x * y).Sum() + node[0][0];
                 
-                calculations[^1][^1][0] = output;
-                calculations[^1][^1][1] = Sigmoid(output);
+                calculations[^1][^1].Add(output);
+                calculations[^1][^1].Add(Sigmoid(output));
                 nextInput.Add(Sigmoid(output));
             }
         }
@@ -141,9 +149,9 @@ public class NeuralNetworkController : MonoBehaviour
 
         if(softMax)
         {
-            List<float> softmaxInput = Enumerable.Range(0, nN.Last().Count()-1).Select(x => calculations[^1][x][1]).ToList();
+            List<float> softmaxInput = Enumerable.Range(0, calculations.LastOrDefault().Count()).Select(x => calculations.LastOrDefault()[x][1]).ToList();
             double[] softmaxOutput = SoftMaxFunction(softmaxInput);
-
+            
             partialDerivativeOfSoftmax = DerivativeOfSoftmax(relevantOutput, (float)softmaxOutput[relevantOutput], relevantOutput, softmaxInput[relevantOutput]);
         }
 
@@ -155,21 +163,29 @@ public class NeuralNetworkController : MonoBehaviour
         
         for(int i = nN.Count - 1; i >= 0; i--)
         {
-            for(int j = 0; j >= nN[i].Count - 1; j++)
+            if(i > 0)
+            {
+                for(int y = 0; y <= nN[i-1].Count - 1; y++) 
+                {
+                    nN[i-1][y][0][1] = 0;
+                } 
+            }
+
+            for(int j = 0; j <= nN[i].Count - 1; j++)
             {
                 float postSigmoidDerivative = nN[i][j][0][1];
-                float preSigmoidDerivative = postSigmoidDerivative * DerivativeOfSigmoid(calculations[i][j][0]);
+                float preSigmoidDerivative = postSigmoidDerivative * DerivativeOfSigmoid(calculations[i+1][j][0]);
                 
                 nN[i][j][2].Clear();
 
+                foreach(List<float> unweightedInput in calculations[i])
+                {
+                    nN[i][j][2].Add(unweightedInput[1] * preSigmoidDerivative);
+                }
+
                 if(i > 0)
                 {
-                    foreach(List<float> targetNode in calculations[i-1])
-                    {
-                        nN[i][j][2].Add(targetNode[1] * preSigmoidDerivative);
-                    }
-
-                    for(int y = 0; y >= nN[i-1].Count - 1; y++) 
+                    for(int y = 0; y <= nN[i-1].Count - 1; y++) 
                     {
                         nN[i-1][y][0][1] += nN[i][j][2][y] * preSigmoidDerivative;
                     }
@@ -190,7 +206,7 @@ public class NeuralNetworkController : MonoBehaviour
             {
                 node[0][0] += toBeAddedValue * node[0][1];
 
-                for(int i = 0; i < node[1].Count; i++)
+                for(int i = 0; i <= node[1].Count -1; i++)
                 {
                     node[1][i] += toBeAddedValue * node[2][i];
                 }
@@ -229,7 +245,7 @@ public class NeuralNetworkController : MonoBehaviour
         var inputArray_exp = inputArray.Select(Math.Exp);
         var sum_inputArray_exp = inputArray_exp.Sum();
 
-        return (double[])inputArray_exp.Select(i => i / sum_inputArray_exp);
+        return inputArray_exp.Select(i => i / sum_inputArray_exp).ToArray();
     }
 
     float DerivativeOfSoftmax(int inRegardsToOutput, float output, int inRegardsToInput, float input)

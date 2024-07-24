@@ -31,34 +31,6 @@ public class AIControl : MonoBehaviour
         json = "";
     }
 
-    //Sets up racket for playing against human
-    public List<List<List<List<float>>>> SetUpRacket()
-    {
-        print(generation);
-        if(generation > 0)
-        {
-            return AISaves[currentAISave].bestNeuralNetworks[generation];
-        }
-        if(generation == -1)
-        {
-            return AISaves[currentAISave].bestNeuralNetworks.Last();
-        }
-
-        //Returns the NN with teh highest fitness Value
-        float biggestFitnessValue = 0;
-        int fittestEntityIndex = 0;
-        foreach(int i in Enumerable.Range(0, AISaves[currentAISave].bestNeuralNetworks.Count()-1))
-        {
-            if(AISaves[currentAISave].bestNeuralNetworks[i][0][0][0][1] > biggestFitnessValue)
-            {
-                biggestFitnessValue = AISaves[currentAISave].bestNeuralNetworks[i][0][0][0][1];
-                fittestEntityIndex = i;
-            }
-        }
-
-        return AISaves[currentAISave].bestNeuralNetworks[fittestEntityIndex]; 
-    }
-
     void CreateJSONFile()
     {
         if(!File.Exists(saveFilePath))
@@ -75,21 +47,6 @@ public class AIControl : MonoBehaviour
     public void SaveFile()
     {
         Time.timeScale = speed;
-
-        if(new AISavesClass(AISaves) == null)
-        {
-            print("1");
-        }
-
-            if(AISaves == null)
-        {
-            print("2");
-        }
-
-            if(new AISavesClass(AISaves) == null)
-        {
-            print("1");
-        }
 
         json = JsonConvert.SerializeObject(new AISavesClass(AISaves), Formatting.Indented, 
         new JsonSerializerSettings 
