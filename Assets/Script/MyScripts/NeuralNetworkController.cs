@@ -143,15 +143,16 @@ public class NeuralNetworkController : MonoBehaviour
         return (nextInput, calculations);
     }
 
-    public List<List<List<List<float>>>> SetPartialDerivatives(List<List<List<List<float>>>> nN, List<List<List<float>>> calculations, int relevantOutput = 0, bool softMax = false)
+    public List<List<List<float>>> SetPartialDerivatives(List<List<List<List<float>>>> nN, List<List<List<float>>> calculations, int relevantOutput = 0, bool softMax = false)
     {
+        List<List<List<float>>> derivatives = new List<List<List<float>>>();
         float partialDerivativeOfSoftmax = 1;
 
         if(softMax)
         {
             List<float> softmaxInput = Enumerable.Range(0, calculations.LastOrDefault().Count()).Select(x => calculations.LastOrDefault()[x][1]).ToList();
             double[] softmaxOutput = SoftMaxFunction(softmaxInput);
-            
+
             partialDerivativeOfSoftmax = DerivativeOfSoftmax(relevantOutput, (float)softmaxOutput[relevantOutput], relevantOutput, softmaxInput[relevantOutput]);
         }
 
@@ -160,6 +161,11 @@ public class NeuralNetworkController : MonoBehaviour
             node[0][1] = 0;
         }
         nN.Last()[relevantOutput][0][1] = partialDerivativeOfSoftmax;
+
+        for(int i = 0; i <= nN.Count - 1; i++)
+        {
+            derivatives.Add(new List<List<float>>());
+        }
         
         for(int i = nN.Count - 1; i >= 0; i--)
         {
@@ -173,42 +179,47 @@ public class NeuralNetworkController : MonoBehaviour
 
             for(int j = 0; j <= nN[i].Count - 1; j++)
             {
+                derivatives[i].Add(new List<float>());
+
                 float postSigmoidDerivative = nN[i][j][0][1];
                 float preSigmoidDerivative = postSigmoidDerivative * DerivativeOfSigmoid(calculations[i+1][j][0]);
                 
                 nN[i][j][2].Clear();
+                
+                derivatives[i][j].Add(preSigmoidDerivative);
 
                 foreach(List<float> unweightedInput in calculations[i])
                 {
-                    nN[i][j][2].Add(unweightedInput[1] * preSigmoidDerivative);
+                    derivatives[i][j].Add(unweightedInput[1] * preSigmoidDerivative);
                 }
 
                 if(i > 0)
                 {
                     for(int y = 0; y <= nN[i-1].Count - 1; y++) 
                     {
-                        nN[i-1][y][0][1] += nN[i][j][2][y] * preSigmoidDerivative;
+                        nN[i-1][y][0][1] += nN[i][j][1][y] * preSigmoidDerivative;
                     }
                 }
 
-                nN[i][j][0][1] = preSigmoidDerivative;
             }
         }
 
-        return nN;
+        return derivatives;
     }
 
-    public List<List<List<List<float>>>> OneStopMethod(List<List<List<List<float>>>> nN, float toBeAddedValue)
+    public List<List<List<List<float>>>> GradientAscent(List<List<List<List<float>>>> nN, List<List<List<float>>> derivatives)
     {
-        foreach(List<List<List<float>>> layer in nN)
-        {
-            foreach(List<List<float>> node in layer)
-            {
-                node[0][0] += toBeAddedValue * node[0][1];
+        float toBeAddedValue = derivatives.LastOrDefault().LastOrDefault().LastOrDefault();
 
-                for(int i = 0; i <= node[1].Count -1; i++)
+        for(int i = 0; i <= nN.Count-1; i++)
+        {
+            for(int j = 0; j <= nN[i].Count - 1; j++)
+            {
+                nN[i][j][0][0] += toBeAddedValue * derivatives[i][0][1];
+
+                for(int y = 0; y <= nN[i][j][1].Count -1; y++)
                 {
-                    node[1][i] += toBeAddedValue * node[2][i];
+                    nN[i][j][1][y] += toBeAddedValue * derivatives[i][0][y++];
                 }
             }
         }

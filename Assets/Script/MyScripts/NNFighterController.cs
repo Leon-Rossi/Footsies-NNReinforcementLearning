@@ -25,6 +25,9 @@ public class NNFighterController : MonoBehaviour
     List<List<List<List<float>>>> policyNN = new List<List<List<List<float>>>>();
     List<List<List<List<float>>>> valueNN = new List<List<List<List<float>>>>();
 
+    List<List<List<List<float>>>> policyDerivatives = new List<List<List<List<float>>>>();
+    List<List<List<List<float>>>> valueDerivatives = new List<List<List<List<float>>>>();
+
     List<List<List<float>>> lastCalculation = new List<List<List<float>>>();
 
     List<List<List<float>>> leftLastCalculation = new List<List<List<float>>>();
@@ -44,6 +47,8 @@ public class NNFighterController : MonoBehaviour
 
     bool isVsNN;
     private List<float> output;
+    private int batchCount = 0;
+    private int batchSize = 10;
 
 
     // Start is called before the first frame update
@@ -91,13 +96,11 @@ public class NNFighterController : MonoBehaviour
 
         double x = UnityEngine.Random.value;
         int chosenAction = -1;
-        while(x > 0)
+        while(x >= 0)
         {
             chosenAction ++;
             x -= outputArray[chosenAction];
         }
-        print(outputArray.Count());
-        print(chosenAction);
 
         if(!isVsNN)
         {
@@ -122,7 +125,7 @@ public class NNFighterController : MonoBehaviour
             {
                 leftAction = false;
                 rightAction = false;
-                
+
                 TrainNNS();        
             }
         }
@@ -136,26 +139,42 @@ public class NNFighterController : MonoBehaviour
         float leftThisStateValue = leftVar.output[0];
         float leftAdvantage = decayRate * leftThisStateValue - leftLastStateValue + Reward(true);
 
-        policyNN = neuralNetworkController.SetPartialDerivatives(policyNN, leftLastCalculation, leftLastOutputResult, true);
-        policyNN = neuralNetworkController.OneStopMethod(policyNN, (float)(policyLearningRate *policyTotalDecay * leftAdvantage / leftLastOutputProbability));
+        policyDerivatives.Add(neuralNetworkController.SetPartialDerivatives(policyNN, leftLastCalculation, leftLastOutputResult, true));
+        policyDerivatives.LastOrDefault().LastOrDefault().LastOrDefault().Add((float)(policyLearningRate *policyTotalDecay * leftAdvantage / leftLastOutputProbability));
 
-        valueNN = neuralNetworkController.SetPartialDerivatives(valueNN, leftVar.calculations);
-        valueNN = neuralNetworkController.OneStopMethod(valueNN, valueLearningRate * leftAdvantage);
+        valueDerivatives.Add(neuralNetworkController.SetPartialDerivatives(valueNN, leftVar.calculations));
+        valueDerivatives.LastOrDefault().LastOrDefault().LastOrDefault().Add(valueLearningRate * leftAdvantage);
         
         var rightVar = neuralNetworkController.RunNNAndSave(valueNN, GetInput(false), NeuralNetworkController.ActivationFunctions.Sigmoid);
         float rightThisStateValue = rightVar.output[0];
         float rightAdvantage = decayRate * rightThisStateValue - rightLastStateValue + Reward(false);
 
-        policyNN = neuralNetworkController.SetPartialDerivatives(policyNN, rightLastCalculation, rightLastOutputResult, true);
-        policyNN = neuralNetworkController.OneStopMethod(policyNN, (float)(policyLearningRate *policyTotalDecay * rightAdvantage / rightLastOutputProbability));
+        policyDerivatives.Add(neuralNetworkController.SetPartialDerivatives(policyNN, rightLastCalculation, rightLastOutputResult, true));
+        policyDerivatives.LastOrDefault().LastOrDefault().LastOrDefault().Add((float)(policyLearningRate *policyTotalDecay * rightAdvantage / rightLastOutputProbability));
 
-        valueNN = neuralNetworkController.SetPartialDerivatives(valueNN, rightVar.calculations);
-        valueNN = neuralNetworkController.OneStopMethod(valueNN, valueLearningRate * rightAdvantage);
+        valueDerivatives.Add(neuralNetworkController.SetPartialDerivatives(valueNN, rightVar.calculations));
+        valueDerivatives.LastOrDefault().LastOrDefault().LastOrDefault().Add(valueLearningRate * rightAdvantage);
 
         leftLastStateValue = leftThisStateValue;
         rightLastStateValue = rightThisStateValue;
 
         policyTotalDecay *= decayRate;
+
+        batchCount++;
+        if(batchCount > batchSize)
+        {
+            batchCount = 0;
+
+            foreach(List<List<List<float>>> derivative in policyDerivatives)
+            {
+                policyNN = neuralNetworkController.GradientAscent(policyNN, derivative);
+            }
+
+            foreach(List<List<List<float>>> derivative in valueDerivatives)
+            {
+                valueNN = neuralNetworkController.GradientAscent(valueNN, derivative);
+            }
+        }
     }
 
     private float Reward(bool isLeftFighter)
