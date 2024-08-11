@@ -20,8 +20,6 @@ public class NNFighterController : MonoBehaviour
 
     int currentAISave;
 
-    List<List<List<List<List<float>>>>> NNList = new List<List<List<List<List<float>>>>>();
-
     List<List<List<List<float>>>> policyNN = new List<List<List<List<float>>>>();
     List<List<List<List<float>>>> valueNN = new List<List<List<List<float>>>>();
 
@@ -33,25 +31,28 @@ public class NNFighterController : MonoBehaviour
     List<List<List<float>>> leftLastCalculation = new List<List<List<float>>>();
     int leftLastOutputResult;
     double leftLastOutputProbability;
-    bool leftAction;
     float leftLastStateValue;
 
     List<List<List<float>>> rightLastCalculation = new List<List<List<float>>>();
     int rightLastOutputResult;
     double rightLastOutputProbability;
-    bool rightAction;
     float rightLastStateValue;
 
     float leftTimeSinceNoAttack = 0;
     float rightTimeSinceNoAttack = 0;
 
-    bool isVsNN;
+    bool humanVsNN;
     private List<float> output;
+    private int sampleCount = 0;
+    private int batchSize = 32;
     private int batchCount = 0;
-    private int batchSize = 10;
+    private int batchSaveSize = 100;
+    private bool rightIsCurrentNN = true;
+    private bool skipOneFrameTraining = false;
+    List<List<List<List<float>>>> policyAlternativeNN = new List<List<List<List<float>>>>();
 
 
-    // Start is called before the first frame update
+
     void Awake()
     {
         aiControl = GameObject.Find("GameMaster").GetComponent<AIControl>();
@@ -65,15 +66,14 @@ public class NNFighterController : MonoBehaviour
 
         valueLearningRate = aiControl.AISaves[currentAISave].valueLearningRate;
 
-        if(GameManager.Instance.isVsNN)
+        if(GameManager.Instance.humanVsNN)
         {
-            isVsNN = true;
+            humanVsNN = true;
         }
 
         Time.timeScale = aiControl.speed;
 
-        leftLastStateValue = 0;
-        rightLastStateValue = 0;
+        skipOneFrameTraining = true;
 
         policyNN = aiControl.AISaves[currentAISave].policyNN;
         valueNN = aiControl.AISaves[currentAISave].valueNN;
@@ -81,9 +81,18 @@ public class NNFighterController : MonoBehaviour
 
     public int RunNN(bool isLeftFighter)
     {
-        if(isVsNN)
+        if(isLeftFighter)
+        {
+            TrainNNS();
+        }
+
+        if(humanVsNN)
         {
             output = neuralNetworkController.RunNN(policyNN, GetInput(isLeftFighter), NeuralNetworkController.ActivationFunctions.Sigmoid);
+        }
+        else if(!isLeftFighter && !rightIsCurrentNN)
+        {
+            output = neuralNetworkController.RunNN(policyAlternativeNN, GetInput(isLeftFighter), NeuralNetworkController.ActivationFunctions.Sigmoid);
         }
         else
         {
@@ -102,14 +111,13 @@ public class NNFighterController : MonoBehaviour
             x -= outputArray[chosenAction];
         }
 
-        if(!isVsNN)
+        if(!humanVsNN)
         {
             if(isLeftFighter)
             {
                 leftLastCalculation = lastCalculation;
                 leftLastOutputResult = chosenAction;
                 leftLastOutputProbability = outputArray[chosenAction];
-                leftAction = true;
                 leftTimeSinceNoAttack = chosenAction >= 4? leftTimeSinceNoAttack ++ : 0;
             }
             else
@@ -117,19 +125,23 @@ public class NNFighterController : MonoBehaviour
                 rightLastCalculation = lastCalculation;
                 rightLastOutputResult = chosenAction;
                 rightLastOutputProbability = outputArray[chosenAction];
-                rightAction = true;
                 rightTimeSinceNoAttack = chosenAction >= 4? rightTimeSinceNoAttack ++ : 0;
-            }
 
-            if(leftAction && rightAction)
-            {
-                leftAction = false;
-                rightAction = false;
-
-                TrainNNS();        
+                if(chosenAction == 1){
+                    chosenAction = 2;
+                }
+                else if(chosenAction == 2){
+                    chosenAction = 1;
+                }
+                else if(chosenAction == 5){
+                    chosenAction = 6;
+                }
+                else if(chosenAction == 6){
+                    chosenAction = 5;
+                }
             }
         }
-
+        skipOneFrameTraining = false;
         return chosenAction;
     }
 
@@ -139,40 +151,70 @@ public class NNFighterController : MonoBehaviour
         float leftThisStateValue = leftVar.output[0];
         float leftAdvantage = decayRate * leftThisStateValue - leftLastStateValue + Reward(true);
 
-        policyDerivatives.Add(neuralNetworkController.SetPartialDerivatives(policyNN, leftLastCalculation, leftLastOutputResult, true));
-        policyDerivatives.LastOrDefault().LastOrDefault().LastOrDefault().Add((float)(policyLearningRate *policyTotalDecay * leftAdvantage / leftLastOutputProbability));
-
-        valueDerivatives.Add(neuralNetworkController.SetPartialDerivatives(valueNN, leftVar.calculations));
-        valueDerivatives.LastOrDefault().LastOrDefault().LastOrDefault().Add(valueLearningRate * leftAdvantage);
-        
         var rightVar = neuralNetworkController.RunNNAndSave(valueNN, GetInput(false), NeuralNetworkController.ActivationFunctions.Sigmoid);
         float rightThisStateValue = rightVar.output[0];
         float rightAdvantage = decayRate * rightThisStateValue - rightLastStateValue + Reward(false);
 
-        policyDerivatives.Add(neuralNetworkController.SetPartialDerivatives(policyNN, rightLastCalculation, rightLastOutputResult, true));
-        policyDerivatives.LastOrDefault().LastOrDefault().LastOrDefault().Add((float)(policyLearningRate *policyTotalDecay * rightAdvantage / rightLastOutputProbability));
+        if(!skipOneFrameTraining)
+        {
+            policyDerivatives.Add(neuralNetworkController.SetPartialDerivatives(policyNN, leftLastCalculation, leftLastOutputResult, true));
+            policyDerivatives.LastOrDefault().LastOrDefault().LastOrDefault().Add((float)(policyLearningRate *policyTotalDecay * leftAdvantage / leftLastOutputProbability));
 
-        valueDerivatives.Add(neuralNetworkController.SetPartialDerivatives(valueNN, rightVar.calculations));
-        valueDerivatives.LastOrDefault().LastOrDefault().LastOrDefault().Add(valueLearningRate * rightAdvantage);
+            valueDerivatives.Add(neuralNetworkController.SetPartialDerivatives(valueNN, leftVar.calculations));
+            valueDerivatives.LastOrDefault().LastOrDefault().LastOrDefault().Add(valueLearningRate * leftAdvantage);
+            
+            if(rightIsCurrentNN)
+            {
+                policyDerivatives.Add(neuralNetworkController.SetPartialDerivatives(policyNN, rightLastCalculation, rightLastOutputResult, true));
+                policyDerivatives.LastOrDefault().LastOrDefault().LastOrDefault().Add((float)(policyLearningRate *policyTotalDecay * rightAdvantage / rightLastOutputProbability));
+
+                valueDerivatives.Add(neuralNetworkController.SetPartialDerivatives(valueNN, rightVar.calculations));
+                valueDerivatives.LastOrDefault().LastOrDefault().LastOrDefault().Add(valueLearningRate * rightAdvantage);
+            }
+        }
 
         leftLastStateValue = leftThisStateValue;
         rightLastStateValue = rightThisStateValue;
 
         policyTotalDecay *= decayRate;
 
-        batchCount++;
-        if(batchCount > batchSize)
+        sampleCount++;
+        if(sampleCount >= batchSize)
         {
-            batchCount = 0;
+            batchCount ++;
+            sampleCount = 0;
 
             foreach(List<List<List<float>>> derivative in policyDerivatives)
             {
                 policyNN = neuralNetworkController.GradientAscent(policyNN, derivative);
             }
+            policyDerivatives.Clear();
 
             foreach(List<List<List<float>>> derivative in valueDerivatives)
             {
                 valueNN = neuralNetworkController.GradientAscent(valueNN, derivative);
+            }
+            valueDerivatives.Clear();
+
+            if(batchCount >= batchSaveSize)
+            {
+                batchCount = 0;
+                aiControl.AISaves[currentAISave].oldPolicyNNs.Add(aiControl.AISaves[currentAISave].CreateSerializedCopy(policyNN));
+                aiControl.AISaves[currentAISave].policyNN = aiControl.AISaves[currentAISave].CreateSerializedCopy(policyNN);
+                aiControl.AISaves[currentAISave].valueNN = aiControl.AISaves[currentAISave].CreateSerializedCopy(valueNN);
+
+                if(UnityEngine.Random.value > 0.3)
+                {
+                    rightIsCurrentNN = true;
+                    print("vs current NN");
+                }
+                else
+                {
+                    var rightNNIndex = (int)Math.Truncate(UnityEngine.Random.value * aiControl.AISaves[currentAISave].oldPolicyNNs.Count()-1);
+                    policyAlternativeNN = aiControl.AISaves[currentAISave].oldPolicyNNs[rightNNIndex];
+                    skipOneFrameTraining = true;
+                    print(" vs NN: " + rightNNIndex);
+                }
             }
         }
     }
@@ -191,25 +233,50 @@ public class NNFighterController : MonoBehaviour
 
     public List<float> GetInput(bool isLeftFighter)
     {
-        return new List<float>(){
-            Convert.ToInt32(isLeftFighter),
+        if(isLeftFighter)
+        {
+            return new List<float>(){
+                Convert.ToInt32(isLeftFighter),
 
-            leftTimeSinceNoAttack,
-            battleCore.fighter1.position.x,
-            battleCore.fighter1.currentActionID,
-            battleCore.fighter1.currentActionFrame,
-            battleCore.fighter1.currentActionFrameCount,
-            battleCore.fighter1.currentHitStunFrame,
-            battleCore.fighter1.guardHealth,
+                leftTimeSinceNoAttack,
+                battleCore.fighter1.position.x,
+                battleCore.fighter1.currentActionID,
+                battleCore.fighter1.currentActionFrame,
+                battleCore.fighter1.currentActionFrameCount,
+                battleCore.fighter1.currentHitStunFrame,
+                battleCore.fighter1.guardHealth,
 
-            rightTimeSinceNoAttack,
-            battleCore.fighter2.position.x,
-            battleCore.fighter2.currentActionID,
-            battleCore.fighter2.currentActionFrame,
-            battleCore.fighter2.currentActionFrameCount,
-            battleCore.fighter2.currentHitStunFrame,
-            battleCore.fighter2.guardHealth,
-        };
+                rightTimeSinceNoAttack,
+                battleCore.fighter2.position.x,
+                battleCore.fighter2.currentActionID,
+                battleCore.fighter2.currentActionFrame,
+                battleCore.fighter2.currentActionFrameCount,
+                battleCore.fighter2.currentHitStunFrame,
+                battleCore.fighter2.guardHealth,
+            };
+        }
+        else
+        {
+            return new List<float>(){
+                Convert.ToInt32(isLeftFighter),
+
+                rightTimeSinceNoAttack,
+                battleCore.fighter2.position.x *-1,
+                battleCore.fighter2.currentActionID,
+                battleCore.fighter2.currentActionFrame,
+                battleCore.fighter2.currentActionFrameCount,
+                battleCore.fighter2.currentHitStunFrame,
+                battleCore.fighter2.guardHealth,
+
+                leftTimeSinceNoAttack,
+                battleCore.fighter1.position.x *-1,
+                battleCore.fighter1.currentActionID,
+                battleCore.fighter1.currentActionFrame,
+                battleCore.fighter1.currentActionFrameCount,
+                battleCore.fighter1.currentHitStunFrame,
+                battleCore.fighter1.guardHealth,
+            };
+        }
     }
 
     //https://gist.github.com/jogleasonjr/55641e503142be19c9d3692b6579f221

@@ -121,7 +121,7 @@ namespace Footsies
             }
             else
             {
-                rightIsNN = GameManager.Instance.isVsNN;
+                rightIsNN = GameManager.Instance.humanVsNN;
             }
         }
         

@@ -17,7 +17,7 @@ namespace Footsies
 
         public SceneIndex currentScene { get; private set; }
         public bool isVsCPU { get; private set; }
-        public bool isVsNN { get; private set; }
+        public bool humanVsNN { get; private set; }
         public bool isNNTraining { get; private set; }
 
         private void Awake()
@@ -52,7 +52,7 @@ namespace Footsies
         public void LoadVsPlayerScene()
         {
             isVsCPU = false;
-            isVsNN = false;
+            humanVsNN = false;
             isNNTraining = false;
             LoadBattleScene();
         }
@@ -60,7 +60,7 @@ namespace Footsies
         public void LoadVsCPUScene()
         {
             isVsCPU = true;
-            isVsNN = false;
+            humanVsNN = false;
             isNNTraining = false;
             LoadBattleScene();
         }
@@ -68,7 +68,7 @@ namespace Footsies
         public void LoadTrainingScene()
         {
             isVsCPU = false;
-            isVsNN = false;
+            humanVsNN = false;
             isNNTraining = true; 
             LoadBattleScene();
         }
@@ -77,7 +77,7 @@ namespace Footsies
         {
             isVsCPU = false;
             isNNTraining = false;
-            isVsNN = true;
+            humanVsNN = true;
             LoadBattleScene();
             print("Load Play AI");
         }

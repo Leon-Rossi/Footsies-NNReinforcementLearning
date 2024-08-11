@@ -146,21 +146,25 @@ public class NeuralNetworkController : MonoBehaviour
     public List<List<List<float>>> SetPartialDerivatives(List<List<List<List<float>>>> nN, List<List<List<float>>> calculations, int relevantOutput = 0, bool softMax = false)
     {
         List<List<List<float>>> derivatives = new List<List<List<float>>>();
-        float partialDerivativeOfSoftmax = 1;
 
         if(softMax)
         {
-            List<float> softmaxInput = Enumerable.Range(0, calculations.LastOrDefault().Count()).Select(x => calculations.LastOrDefault()[x][1]).ToList();
+            List<float> softmaxInput = Enumerable.Range(0, calculations.LastOrDefault().Count()).Select(x => calculations.LastOrDefault()[x][0]).ToList();
             double[] softmaxOutput = SoftMaxFunction(softmaxInput);
 
-            partialDerivativeOfSoftmax = DerivativeOfSoftmax(relevantOutput, (float)softmaxOutput[relevantOutput], relevantOutput, softmaxInput[relevantOutput]);
+            for(int i = 0; i <= softmaxOutput.Length-1; i++)
+            {
+                nN.LastOrDefault()[i][0][1] = DerivativeOfSoftmax(relevantOutput, softmaxOutput, i);
+            }
         }
-
-        foreach(List<List<float>> node in nN.Last())
+        else
         {
-            node[0][1] = 0;
+            foreach(List<List<float>> node in nN.Last())
+            {
+                node[0][1] = 0;
+            }
+            nN.Last()[relevantOutput][0][1] = 1;
         }
-        nN.Last()[relevantOutput][0][1] = partialDerivativeOfSoftmax;
 
         for(int i = 0; i <= nN.Count - 1; i++)
         {
@@ -259,14 +263,12 @@ public class NeuralNetworkController : MonoBehaviour
         return inputArray_exp.Select(i => i / sum_inputArray_exp).ToArray();
     }
 
-    float DerivativeOfSoftmax(int inRegardsToOutput, float output, int inRegardsToInput, float input)
+    float DerivativeOfSoftmax(int inRegardsToOutput, double[] output, int inRegardsToInput)
     {
         if(inRegardsToOutput == inRegardsToInput)
         {
-            return output*(1 - input);
+            return (float)(output[inRegardsToOutput]*(1 - output[inRegardsToOutput]));
         }
-        return -output * input;
+        return (float)(-output[inRegardsToOutput] * output[inRegardsToOutput]);
     }
-
-
 }
