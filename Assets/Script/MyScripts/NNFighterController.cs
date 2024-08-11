@@ -44,9 +44,9 @@ public class NNFighterController : MonoBehaviour
     bool humanVsNN;
     private List<float> output;
     private int sampleCount = 0;
-    private int batchSize = 32;
+    private int batchSize = 64;
     private int batchCount = 0;
-    private int batchSaveSize = 100;
+    private int batchSaveSize = 1000;
     private bool rightIsCurrentNN = true;
     private bool skipOneFrameTraining = false;
     List<List<List<List<float>>>> policyAlternativeNN = new List<List<List<List<float>>>>();
@@ -149,11 +149,11 @@ public class NNFighterController : MonoBehaviour
     {
         var leftVar = neuralNetworkController.RunNNAndSave(valueNN, GetInput(true), NeuralNetworkController.ActivationFunctions.Sigmoid);
         float leftThisStateValue = leftVar.output[0];
-        float leftAdvantage = decayRate * leftThisStateValue - leftLastStateValue + Reward(true);
+        float leftAdvantage = (float)(decayRate * leftThisStateValue - leftLastStateValue + Reward(true));
 
         var rightVar = neuralNetworkController.RunNNAndSave(valueNN, GetInput(false), NeuralNetworkController.ActivationFunctions.Sigmoid);
         float rightThisStateValue = rightVar.output[0];
-        float rightAdvantage = decayRate * rightThisStateValue - rightLastStateValue + Reward(false);
+        float rightAdvantage = (float)(decayRate * rightThisStateValue - rightLastStateValue + Reward(false));
 
         if(!skipOneFrameTraining)
         {
@@ -215,14 +215,17 @@ public class NNFighterController : MonoBehaviour
                     skipOneFrameTraining = true;
                     print(" vs NN: " + rightNNIndex);
                 }
+                aiControl.SaveFile();
             }
         }
     }
 
-    private float Reward(bool isLeftFighter)
+    private double Reward(bool isLeftFighter)
     {
-        int reward = 0;
-        reward += battleCore.GetFrameAdvantage(isLeftFighter);
+        double reward = 0;
+        double frameAdvantage = battleCore.GetFrameAdvantage(isLeftFighter);
+        frameAdvantage *= Math.Abs(battleCore.fighter1.position.x - battleCore.fighter2.position.x) < 500 ? 0.5 : 0.1;
+        reward += frameAdvantage;
         reward += isLeftFighter ? battleCore.leftTotalReward : battleCore.rightTotalReward;
 
         battleCore.leftTotalReward = isLeftFighter ? 0 : battleCore.leftTotalReward;
