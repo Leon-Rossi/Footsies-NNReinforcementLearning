@@ -77,7 +77,7 @@ namespace Footsies
         public List<Hurtbox> hurtboxes = new List<Hurtbox>();
         public Pushbox pushbox;
 
-        private FighterData fighterData;
+        public FighterData fighterData;
 
         public bool isDead { get { return vitalHealth <= 0; } }
         public int vitalHealth { get; private set; }

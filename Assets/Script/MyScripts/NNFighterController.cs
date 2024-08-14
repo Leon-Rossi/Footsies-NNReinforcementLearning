@@ -81,9 +81,10 @@ public class NNFighterController : MonoBehaviour
 
     public int RunNN(bool isLeftFighter)
     {
-        if(isLeftFighter ? battleCore.fighter1.isActionEnd : battleCore.fighter2.isActionEnd)
+        if(!ThisInputCounts(isLeftFighter))
         {
-            return 0;
+            print("Test");
+            return isLeftFighter ? leftLastOutputResult : rightLastOutputResult;
         }
     
         if(isLeftFighter)
@@ -150,18 +151,26 @@ public class NNFighterController : MonoBehaviour
         return chosenAction;
     }
 
+    private bool ThisInputCounts(bool isLeftFighter)
+    {
+        if(!isLeftFighter)
+        {
+            return battleCore.fighter1.currentActionFrame >= battleCore.fighter1.fighterData.actions[battleCore.fighter1.currentActionID].frameCount -1 || battleCore.fighter1.fighterData.actions[battleCore.fighter1.currentActionID].alwaysCancelable;
+        }
+
+        return battleCore.fighter2.currentActionFrame >= battleCore.fighter2.fighterData.actions[battleCore.fighter2.currentActionID].frameCount -1 || battleCore.fighter2.fighterData.actions[battleCore.fighter1.currentActionID].alwaysCancelable;
+    }
+
     public void TrainNNS()
     {
         var leftVar = neuralNetworkController.RunNNAndSave(valueNN, GetInput(true), NeuralNetworkController.ActivationFunctions.Sigmoid);
         float leftThisStateValue = leftVar.output[0];
         float leftAdvantage = (float)(decayRate * leftThisStateValue - leftLastStateValue + Reward(true));
         leftAdvantage = (float)Reward(true);
-        print(leftAdvantage);
 
         var rightVar = neuralNetworkController.RunNNAndSave(valueNN, GetInput(false), NeuralNetworkController.ActivationFunctions.Sigmoid);
         float rightThisStateValue = rightVar.output[0];
         float rightAdvantage = (float)(decayRate * rightThisStateValue - rightLastStateValue + Reward(false));
-        rightAdvantage = (float)Reward(false);
 
         if(!skipOneFrameTraining)
         {
