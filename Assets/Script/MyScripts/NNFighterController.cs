@@ -81,6 +81,11 @@ public class NNFighterController : MonoBehaviour
 
     public int RunNN(bool isLeftFighter)
     {
+        if(isLeftFighter ? battleCore.fighter1.isActionEnd : battleCore.fighter2.isActionEnd)
+        {
+            return 0;
+        }
+    
         if(isLeftFighter)
         {
             TrainNNS();
@@ -150,10 +155,13 @@ public class NNFighterController : MonoBehaviour
         var leftVar = neuralNetworkController.RunNNAndSave(valueNN, GetInput(true), NeuralNetworkController.ActivationFunctions.Sigmoid);
         float leftThisStateValue = leftVar.output[0];
         float leftAdvantage = (float)(decayRate * leftThisStateValue - leftLastStateValue + Reward(true));
+        leftAdvantage = (float)Reward(true);
+        print(leftAdvantage);
 
         var rightVar = neuralNetworkController.RunNNAndSave(valueNN, GetInput(false), NeuralNetworkController.ActivationFunctions.Sigmoid);
         float rightThisStateValue = rightVar.output[0];
         float rightAdvantage = (float)(decayRate * rightThisStateValue - rightLastStateValue + Reward(false));
+        rightAdvantage = (float)Reward(false);
 
         if(!skipOneFrameTraining)
         {
@@ -222,6 +230,7 @@ public class NNFighterController : MonoBehaviour
 
     private double Reward(bool isLeftFighter)
     {
+        return RewardTest(isLeftFighter);
         double reward = 0;
         double frameAdvantage = battleCore.GetFrameAdvantage(isLeftFighter);
         frameAdvantage *= Math.Abs(battleCore.fighter1.position.x - battleCore.fighter2.position.x) < 500 ? 0.5 : 0.1;
@@ -232,6 +241,12 @@ public class NNFighterController : MonoBehaviour
         battleCore.rightTotalReward = !isLeftFighter ? 0 : battleCore.rightTotalReward;
 
         return reward;
+    }
+
+    private double RewardTest(bool isLeftFighter)
+    {
+        //print(isLeftFighter ? leftLastOutputResult*-20 + 10 : rightLastOutputResult*-20 + 10);
+        return isLeftFighter ? leftLastOutputResult*-20 + 10 : rightLastOutputResult*-20 + 10;
     }
 
     public List<float> GetInput(bool isLeftFighter)
