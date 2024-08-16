@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Data.SqlTypes;
 using System.Linq;
 using System.Runtime.Remoting.Messaging;
 using Footsies;
@@ -83,10 +84,9 @@ public class NNFighterController : MonoBehaviour
     {
         if(!ThisInputCounts(isLeftFighter))
         {
-            print("Test");
             return isLeftFighter ? leftLastOutputResult : rightLastOutputResult;
         }
-    
+        
         if(isLeftFighter)
         {
             TrainNNS();
@@ -94,19 +94,18 @@ public class NNFighterController : MonoBehaviour
 
         if(humanVsNN)
         {
-            output = neuralNetworkController.RunNN(policyNN, GetInput(isLeftFighter), NeuralNetworkController.ActivationFunctions.Sigmoid);
+            output = neuralNetworkController.RunNN(policyNN, GetInput(isLeftFighter));
         }
         else if(!isLeftFighter && !rightIsCurrentNN)
         {
-            output = neuralNetworkController.RunNN(policyAlternativeNN, GetInput(isLeftFighter), NeuralNetworkController.ActivationFunctions.Sigmoid);
+            output = neuralNetworkController.RunNN(policyAlternativeNN, GetInput(isLeftFighter));
         }
         else
         {
-            var outputVar = neuralNetworkController.RunNNAndSave(policyNN, GetInput(isLeftFighter), NeuralNetworkController.ActivationFunctions.Sigmoid);
+            var outputVar = neuralNetworkController.RunNNAndSave(policyNN, GetInput(isLeftFighter));
             output = outputVar.output;
             lastCalculation = outputVar.calculations;
         }
-
         double[] outputArray = SoftMaxFunction(output);
 
         double x = UnityEngine.Random.value;
@@ -116,7 +115,6 @@ public class NNFighterController : MonoBehaviour
             chosenAction ++;
             x -= outputArray[chosenAction];
         }
-
         if(!humanVsNN)
         {
             if(isLeftFighter)
@@ -155,20 +153,19 @@ public class NNFighterController : MonoBehaviour
     {
         if(!isLeftFighter)
         {
-            return battleCore.fighter1.currentActionFrame >= battleCore.fighter1.fighterData.actions[battleCore.fighter1.currentActionID].frameCount -1 || battleCore.fighter1.fighterData.actions[battleCore.fighter1.currentActionID].alwaysCancelable;
+            return battleCore.fighter1.currentActionFrame == battleCore.fighter1.fighterData.actions[battleCore.fighter1.currentActionID].frameCount -1 || battleCore.fighter1.fighterData.actions[battleCore.fighter1.currentActionID].alwaysCancelable;
         }
 
-        return battleCore.fighter2.currentActionFrame >= battleCore.fighter2.fighterData.actions[battleCore.fighter2.currentActionID].frameCount -1 || battleCore.fighter2.fighterData.actions[battleCore.fighter1.currentActionID].alwaysCancelable;
+        return battleCore.fighter2.currentActionFrame == battleCore.fighter2.fighterData.actions[battleCore.fighter2.currentActionID].frameCount -1 || battleCore.fighter2.fighterData.actions[battleCore.fighter1.currentActionID].alwaysCancelable;
     }
 
     public void TrainNNS()
     {
-        var leftVar = neuralNetworkController.RunNNAndSave(valueNN, GetInput(true), NeuralNetworkController.ActivationFunctions.Sigmoid);
+        var leftVar = neuralNetworkController.RunNNAndSave(valueNN, GetInput(true));
         float leftThisStateValue = leftVar.output[0];
         float leftAdvantage = (float)(decayRate * leftThisStateValue - leftLastStateValue + Reward(true));
-        leftAdvantage = (float)Reward(true);
 
-        var rightVar = neuralNetworkController.RunNNAndSave(valueNN, GetInput(false), NeuralNetworkController.ActivationFunctions.Sigmoid);
+        var rightVar = neuralNetworkController.RunNNAndSave(valueNN, GetInput(false));
         float rightThisStateValue = rightVar.output[0];
         float rightAdvantage = (float)(decayRate * rightThisStateValue - rightLastStateValue + Reward(false));
 
@@ -239,10 +236,9 @@ public class NNFighterController : MonoBehaviour
 
     private double Reward(bool isLeftFighter)
     {
-        return RewardTest(isLeftFighter);
         double reward = 0;
         double frameAdvantage = battleCore.GetFrameAdvantage(isLeftFighter);
-        frameAdvantage *= Math.Abs(battleCore.fighter1.position.x - battleCore.fighter2.position.x) < 500 ? 0.5 : 0.1;
+        frameAdvantage *= Math.Abs(battleCore.fighter1.position.x - battleCore.fighter2.position.x) < 500 ? 0.1 : 0.01;
         reward += frameAdvantage;
         reward += isLeftFighter ? battleCore.leftTotalReward : battleCore.rightTotalReward;
 
@@ -252,21 +248,13 @@ public class NNFighterController : MonoBehaviour
         return reward;
     }
 
-    private double RewardTest(bool isLeftFighter)
-    {
-        //print(isLeftFighter ? leftLastOutputResult*-20 + 10 : rightLastOutputResult*-20 + 10);
-        return isLeftFighter ? leftLastOutputResult*-20 + 10 : rightLastOutputResult*-20 + 10;
-    }
-
     public List<float> GetInput(bool isLeftFighter)
     {
         if(isLeftFighter)
         {
             return new List<float>(){
-                Convert.ToInt32(isLeftFighter),
-
                 leftTimeSinceNoAttack,
-                battleCore.fighter1.position.x,
+                battleCore.fighter1.position.x/100,
                 battleCore.fighter1.currentActionID,
                 battleCore.fighter1.currentActionFrame,
                 battleCore.fighter1.currentActionFrameCount,
@@ -274,7 +262,7 @@ public class NNFighterController : MonoBehaviour
                 battleCore.fighter1.guardHealth,
 
                 rightTimeSinceNoAttack,
-                battleCore.fighter2.position.x,
+                battleCore.fighter2.position.x/100,
                 battleCore.fighter2.currentActionID,
                 battleCore.fighter2.currentActionFrame,
                 battleCore.fighter2.currentActionFrameCount,
@@ -285,10 +273,8 @@ public class NNFighterController : MonoBehaviour
         else
         {
             return new List<float>(){
-                Convert.ToInt32(isLeftFighter),
-
                 rightTimeSinceNoAttack,
-                battleCore.fighter2.position.x *-1,
+                battleCore.fighter2.position.x *-1/100,
                 battleCore.fighter2.currentActionID,
                 battleCore.fighter2.currentActionFrame,
                 battleCore.fighter2.currentActionFrameCount,
@@ -296,7 +282,7 @@ public class NNFighterController : MonoBehaviour
                 battleCore.fighter2.guardHealth,
 
                 leftTimeSinceNoAttack,
-                battleCore.fighter1.position.x *-1,
+                battleCore.fighter1.position.x *-1/100,
                 battleCore.fighter1.currentActionID,
                 battleCore.fighter1.currentActionFrame,
                 battleCore.fighter1.currentActionFrameCount,

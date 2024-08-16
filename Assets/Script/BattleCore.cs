@@ -71,7 +71,7 @@ namespace Footsies
         public int leftTotalReward;
         public int rightTotalReward;
 
-        int maxRoundTime = 30;
+        int maxRoundTime = 3000;
 
         private static uint maxRecordingInputFrame = 60 * 60 * 5;
         private InputData[] recordingP1Input = new InputData[maxRecordingInputFrame];
@@ -276,8 +276,8 @@ namespace Footsies
 
                         else if (deadFighter[0] == fighter1 && isNNTraining)
                         {
-                            leftTotalReward += 40;
-                            rightTotalReward -= 40;
+                            leftTotalReward += 100;
+                            rightTotalReward -= 100;
 
                             //fighter2.RequestWinAction();
 
@@ -289,8 +289,8 @@ namespace Footsies
                         }
                         else if (deadFighter[0] == fighter2 && isNNTraining)
                         {
-                            rightTotalReward += 40;
-                            leftTotalReward -= 40;
+                            rightTotalReward += 100;
+                            leftTotalReward -= 100;
                             //fighter1.RequestWinAction();
 
                             fighter1.SetupBattleStart(fighterDataList[0], new Vector2(-2f, 0f), true);
@@ -349,14 +349,14 @@ namespace Footsies
         {
             if(fighter2LastGuard != fighter2.guardHealth && fighter2.guardHealth != 3)
             {
-                leftTotalReward += 5;
-                rightTotalReward -= 5;
+                leftTotalReward += 10;
+                rightTotalReward -= 10;
             }
 
             if(fighter1LastGuard != fighter1.guardHealth && fighter1.guardHealth != 3)
             {
-                leftTotalReward -= 5;
-                rightTotalReward += 5;
+                leftTotalReward -= 10;
+                rightTotalReward += 10;
             }
 
             fighter1LastGuard = fighter1.guardHealth;

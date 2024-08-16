@@ -52,7 +52,6 @@ public class NeuralNetworkController : MonoBehaviour
                         node[1].Add(RandomValue());
                     }
                 }
-
             }
         }
 
@@ -84,7 +83,7 @@ public class NeuralNetworkController : MonoBehaviour
         return nN;
     }
 
-    public List<float> RunNN(List<List<List<List<float>>>> nN, List<float> input, ActivationFunctions selectedActivationFunction)
+    public List<float> RunNN(List<List<List<List<float>>>> nN, List<float> input)
     {
         List<float> currentInput = new List<float>();
         List<float> nextInput = new List<float>(input); 
@@ -106,7 +105,7 @@ public class NeuralNetworkController : MonoBehaviour
     }
 
 
-    public (List<float> output, List<List<List<float>>> calculations) RunNNAndSave(List<List<List<List<float>>>> nN, List<float> input, ActivationFunctions selectedActivationFunction)
+    public (List<float> output, List<List<List<float>>> calculations) RunNNAndSave(List<List<List<List<float>>>> nN, List<float> input)
     {
         List<float> currentInput = new List<float>();
         List<float> nextInput = new List<float>(input);
@@ -117,8 +116,8 @@ public class NeuralNetworkController : MonoBehaviour
         foreach(float inputValue in input)
         {
             calculations[0].Add(new List<float>());
-            calculations[^1][^1].Add(inputValue);
-            calculations[^1][^1].Add(Sigmoid(inputValue));
+            calculations[0][^1].Add(inputValue);
+            calculations[0][^1].Add(inputValue);
         }
 
         foreach(List<List<List<float>>> layer in nN)
@@ -219,11 +218,11 @@ public class NeuralNetworkController : MonoBehaviour
         {
             for(int j = 0; j <= nN[i].Count - 1; j++)
             {
-                nN[i][j][0][0] += toBeAddedValue * derivatives[i][0][1];
+                nN[i][j][0][0] += toBeAddedValue * derivatives[i][j][1];
 
                 for(int y = 0; y <= nN[i][j][1].Count -1; y++)
                 {
-                    nN[i][j][1][y] += toBeAddedValue * derivatives[i][0][y++];
+                    nN[i][j][1][y] += toBeAddedValue * derivatives[i][j][y+1];
                 }
             }
         }

@@ -55,8 +55,6 @@ public class AIControl : MonoBehaviour
         });
 
         File.WriteAllText(saveFilePath, json);
-
-        print("try Save File");
     }
 
     //Loads AISaves from JSON File
