@@ -129,7 +129,7 @@ namespace Footsies
         {
             if(isNNTraining)
             {
-                timeSinceLastDeath += Time.deltaTime;
+                //timeSinceLastDeath += Time.deltaTime;
                 if(timeSinceLastDeath > maxRoundTime)
                 {
                     fighter1.SetupBattleStart(fighterDataList[0], new Vector2(-2f, 0f), true);
@@ -276,9 +276,8 @@ namespace Footsies
 
                         else if (deadFighter[0] == fighter1 && isNNTraining)
                         {
-                            leftTotalReward += 100;
-                            rightTotalReward -= 100;
-
+                            rightTotalReward += 100;
+                            leftTotalReward -= 50;
                             //fighter2.RequestWinAction();
 
                             fighter1.SetupBattleStart(fighterDataList[0], new Vector2(-2f, 0f), true);
@@ -288,11 +287,11 @@ namespace Footsies
                             timeSinceLastDeath = 0;
                         }
                         else if (deadFighter[0] == fighter2 && isNNTraining)
-                        {
-                            rightTotalReward += 100;
-                            leftTotalReward -= 100;
-                            //fighter1.RequestWinAction();
+                        {                
+                            leftTotalReward += 100;
+                            rightTotalReward -= 50;
 
+                            //fighter1.RequestWinAction();
                             fighter1.SetupBattleStart(fighterDataList[0], new Vector2(-2f, 0f), true);
                             fighter2.SetupBattleStart(fighterDataList[0], new Vector2(2f, 0f), false);
                             ChangeRoundState(RoundStateType.Fight);
@@ -350,12 +349,12 @@ namespace Footsies
             if(fighter2LastGuard != fighter2.guardHealth && fighter2.guardHealth != 3)
             {
                 leftTotalReward += 10;
-                rightTotalReward -= 10;
+                rightTotalReward -= 5;
             }
 
             if(fighter1LastGuard != fighter1.guardHealth && fighter1.guardHealth != 3)
             {
-                leftTotalReward -= 10;
+                leftTotalReward -= 5;
                 rightTotalReward += 10;
             }
 

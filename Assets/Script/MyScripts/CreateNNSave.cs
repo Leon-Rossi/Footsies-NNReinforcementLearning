@@ -10,13 +10,13 @@ public class CreateNNSave : MonoBehaviour
     private float policyLearningRate;
     private int policyLayerCount;
     private int policyLayerSize;
-    private int policyInputCount = 14;
-    private int policyOutputCount = 8;
+    private int policyInputCount = 15;
+    private int policyOutputCount = 7;
     
     private float valueLearningRate;
     private int valueLayerCount;
     private int valueLayerSize;
-    private int valueInputCount = 14;
+    private int valueInputCount = 15;
     private int valueOutputCount = 1;
 
     GameObject AIMenu;
@@ -86,7 +86,7 @@ public class CreateNNSave : MonoBehaviour
 
     public void CreateNewSave()
     {
-        if(flag1 & flag2 & flag3 & flag4 & flag5 & flag6)
+        if(flag1 & flag2 & flag3 & flag4 & flag5 & flag6 & flag7 & flag8) 
         {
             aiControl = GameObject.Find("GameMaster").GetComponent<AIControl>();
 
