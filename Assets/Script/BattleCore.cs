@@ -276,8 +276,8 @@ namespace Footsies
 
                         else if (deadFighter[0] == fighter1 && isNNTraining)
                         {
-                            rightTotalReward += 100;
-                            leftTotalReward -= 50;
+                            rightTotalReward += 10;
+                            leftTotalReward -= 10;
                             //fighter2.RequestWinAction();
 
                             fighter1.SetupBattleStart(fighterDataList[0], new Vector2(-2f, 0f), true);
@@ -288,8 +288,8 @@ namespace Footsies
                         }
                         else if (deadFighter[0] == fighter2 && isNNTraining)
                         {                
-                            leftTotalReward += 100;
-                            rightTotalReward -= 50;
+                            leftTotalReward += 10;
+                            rightTotalReward -= 10;
 
                             //fighter1.RequestWinAction();
                             fighter1.SetupBattleStart(fighterDataList[0], new Vector2(-2f, 0f), true);
@@ -348,14 +348,14 @@ namespace Footsies
         {
             if(fighter2LastGuard != fighter2.guardHealth && fighter2.guardHealth != 3)
             {
-                leftTotalReward += 10;
-                rightTotalReward -= 5;
+                leftTotalReward += 1;
+                rightTotalReward -= 1;
             }
 
             if(fighter1LastGuard != fighter1.guardHealth && fighter1.guardHealth != 3)
             {
-                leftTotalReward -= 5;
-                rightTotalReward += 10;
+                leftTotalReward -= 1;
+                rightTotalReward += 1;
             }
 
             fighter1LastGuard = fighter1.guardHealth;

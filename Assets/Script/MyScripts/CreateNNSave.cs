@@ -10,13 +10,13 @@ public class CreateNNSave : MonoBehaviour
     private float policyLearningRate;
     private int policyLayerCount;
     private int policyLayerSize;
-    private int policyInputCount = 15;
-    private int policyOutputCount = 7;
+    private int policyInputCount = 24;
+    private int policyOutputCount = 9;
     
     private float valueLearningRate;
     private int valueLayerCount;
     private int valueLayerSize;
-    private int valueInputCount = 15;
+    private int valueInputCount = 24;
     private int valueOutputCount = 1;
 
     GameObject AIMenu;

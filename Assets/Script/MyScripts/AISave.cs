@@ -53,8 +53,8 @@ public class AISave
         aIControl = GameObject.Find("GameMaster").GetComponent<AIControl>();
         neuralNetworkController = GameObject.Find("GameMaster").GetComponent<NeuralNetworkController>();
 
-        policyNN = neuralNetworkController.CreateNN(policyLayerSize, policyLayerCount, policyInputCount, policyOutputCount);
-        valueNN = neuralNetworkController.CreateNN(valueLayerSize, valueLayerCount, valueInputCount, valueOutputCount);
+        policyNN = neuralNetworkController.CreateNN(policyLayerCount, policyLayerSize, policyInputCount, policyOutputCount);
+        valueNN = neuralNetworkController.CreateNN(valueLayerCount, valueLayerSize, valueInputCount, valueOutputCount);
     }
 
     private void Awake()

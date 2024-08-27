@@ -87,7 +87,7 @@ public class NeuralNetworkController : MonoBehaviour
     {
         List<float> currentInput = new List<float>();
         List<float> nextInput = new List<float>(input); 
-        List<float> outputList = new List<float>(input); 
+        List<float> outputList = new List<float>(); 
 
         foreach(List<List<List<float>>> layer in nN)
         {
@@ -104,7 +104,7 @@ public class NeuralNetworkController : MonoBehaviour
                 outputList.Add(output);
             }
         }
-        return nextInput;
+        return outputList;
     }
 
 
@@ -112,7 +112,7 @@ public class NeuralNetworkController : MonoBehaviour
     {
         List<float> currentInput = new List<float>();
         List<float> nextInput = new List<float>(input);
-        List<float> outputList = new List<float>(input);
+        List<float> outputList = new List<float>();
 
         List<List<List<float>>> calculations = new List<List<List<float>>>();
         calculations.Add(new List<List<float>>());
@@ -132,6 +132,7 @@ public class NeuralNetworkController : MonoBehaviour
 
             nextInput.Clear();
             outputList.Clear();
+
 
             foreach(List<List<float>> node in layer)
             {
@@ -197,7 +198,6 @@ public class NeuralNetworkController : MonoBehaviour
                 {
                     preSigmoidDerivative = postSigmoidDerivative * DerivativeOfSigmoid(calculations[i+1][j][0]);
                 }
-                //print(preSigmoidDerivative);
                 
                 nN[i][j][2].Clear();
                 
