@@ -5,18 +5,19 @@ public class CreateNNSave : MonoBehaviour
     public AIControl aiControl;
 
     private string saveName;
+    private bool sigmoid = true;
 
     private float decayRate;
     private float policyLearningRate;
     private int policyLayerCount;
     private int policyLayerSize;
-    private int policyInputCount = 24;
-    private int policyOutputCount = 9;
+    private int policyInputCount = 17;
+    private int policyOutputCount = 7;
     
     private float valueLearningRate;
     private int valueLayerCount;
     private int valueLayerSize;
-    private int valueInputCount = 24;
+    private int valueInputCount = 17;
     private int valueOutputCount = 1;
 
     GameObject AIMenu;
@@ -29,6 +30,7 @@ public class CreateNNSave : MonoBehaviour
     bool flag6 = false;
     bool flag7 = false;
     bool flag8 = false;
+    bool flag9 = false;
 
     void Start()
     {
@@ -84,13 +86,19 @@ public class CreateNNSave : MonoBehaviour
         flag8 = true;
     }
 
+    public void ReadSigmoid(string input)
+    {
+        sigmoid = input == "true";
+        flag9 = true;
+    }
+
     public void CreateNewSave()
     {
         if(flag1 & flag2 & flag3 & flag4 & flag5 & flag6 & flag7 & flag8) 
         {
             aiControl = GameObject.Find("GameMaster").GetComponent<AIControl>();
 
-            aiControl.AISaves.Add(new AISave(saveName, decayRate, policyLearningRate, policyLayerCount, policyLayerSize, policyInputCount, policyOutputCount, valueLearningRate, valueLayerCount, valueLayerSize, valueInputCount, valueOutputCount));
+            aiControl.AISaves.Add(new AISave(saveName, decayRate, policyLearningRate, policyLayerCount, policyLayerSize, policyInputCount, policyOutputCount, valueLearningRate, valueLayerCount, valueLayerSize, valueInputCount, valueOutputCount, sigmoid));
             
             AIMenu.SetActive(true);
             GameObject.Find("CreateNNMenu").SetActive(false);
@@ -98,6 +106,9 @@ public class CreateNNSave : MonoBehaviour
             aiControl.SaveFile();
 
             print("New NN Created!");
+        }
+        else{
+            print("l");
         }
     }
 }

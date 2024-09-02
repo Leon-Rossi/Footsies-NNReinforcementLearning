@@ -23,7 +23,7 @@ public class Tests : MonoBehaviour
             int x = Random.Range(0, 2);
             int y = Random.Range(0, 2);
             var runNNandSave = neuralNetworkController.RunNNAndSave(nN,  new List<float>(){x, y});
-            var derivative = neuralNetworkController.SetPartialDerivatives(nN, runNNandSave.calculations);
+            var derivative = neuralNetworkController.SetPartialDerivatives(nN, runNNandSave.calculations, true);
             print(y + " " + x + " " + runNNandSave.output[0]);
 
             if(x == 1 && y == 1)

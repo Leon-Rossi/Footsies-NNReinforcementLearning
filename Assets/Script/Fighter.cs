@@ -527,7 +527,7 @@ namespace Footsies
             }
         }
         
-        private bool canCancelAttack()
+        public bool canCancelAttack()
         {
             if (fighterData.canCancelOnWhiff)
                 return true;

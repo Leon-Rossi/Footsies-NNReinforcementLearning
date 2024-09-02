@@ -12,6 +12,7 @@ public class AISave
     [JsonIgnore] NeuralNetworkController neuralNetworkController;
 
     public string saveName;
+    public bool sigmoid = true;
 
     public float decayRate;
     public float policyLearningRate;
@@ -31,7 +32,7 @@ public class AISave
 
     public List<List<List<List<List<float>>>>> oldPolicyNNs = new List<List<List<List<List<float>>>>>();
 
-    public AISave(string nameString, float decayRateInput, float policyLearningRateInput, int policyLayerCountInput, int policyLayerSizeInput, int policyInputCountInput, int policyOutputCountInput, float valueLearningRateInput, int valueLayerCountInput, int valueLayerSizeInput, int valueInputCountInput, int valueOutputCountInput)
+    public AISave(string nameString, float decayRateInput, float policyLearningRateInput, int policyLayerCountInput, int policyLayerSizeInput, int policyInputCountInput, int policyOutputCountInput, float valueLearningRateInput, int valueLayerCountInput, int valueLayerSizeInput, int valueInputCountInput, int valueOutputCountInput, bool sigmoidInput)
     {
         
         policyLearningRate = policyLearningRateInput;
@@ -46,6 +47,7 @@ public class AISave
         valueInputCount = valueInputCountInput;
         valueOutputCount = valueOutputCountInput;
 
+        sigmoid = sigmoidInput;
         decayRate = decayRateInput;
         saveName = nameString;
 

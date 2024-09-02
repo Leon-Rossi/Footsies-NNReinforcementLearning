@@ -83,7 +83,7 @@ public class NeuralNetworkController : MonoBehaviour
         return nN;
     }
 
-    public List<float> RunNN(List<List<List<List<float>>>> nN, List<float> input)
+    public List<float> RunNN(List<List<List<List<float>>>> nN, List<float> input, bool sigmoid = true)
     {
         List<float> currentInput = new List<float>();
         List<float> nextInput = new List<float>(input); 
@@ -100,7 +100,7 @@ public class NeuralNetworkController : MonoBehaviour
             {
                 float output = node[1].Zip(currentInput, (x, y) => x * y).Sum() + node[0][0];
                 
-                nextInput.Add(Sigmoid(output));
+                nextInput.Add(sigmoid? Sigmoid(output): ReLu(output));
                 outputList.Add(output);
             }
         }
@@ -108,7 +108,7 @@ public class NeuralNetworkController : MonoBehaviour
     }
 
 
-    public (List<float> output, List<List<List<float>>> calculations) RunNNAndSave(List<List<List<List<float>>>> nN, List<float> input)
+    public (List<float> output, List<List<List<float>>> calculations) RunNNAndSave(List<List<List<List<float>>>> nN, List<float> input, bool sigmoid = true)
     {
         List<float> currentInput = new List<float>();
         List<float> nextInput = new List<float>(input);
@@ -141,15 +141,15 @@ public class NeuralNetworkController : MonoBehaviour
                 float output = node[1].Zip(currentInput, (x, y) => x * y).Sum() + node[0][0];
                 
                 calculations[^1][^1].Add(output);
-                calculations[^1][^1].Add(Sigmoid(output));
-                nextInput.Add(Sigmoid(output));
+                calculations[^1][^1].Add(sigmoid? Sigmoid(output): ReLu(output));
+                nextInput.Add(sigmoid? Sigmoid(output): ReLu(output));
                 outputList.Add(output);
             }
         }
         return (outputList, calculations);
     }
 
-    public List<List<List<float>>> SetPartialDerivatives(List<List<List<List<float>>>> nN, List<List<List<float>>> calculations, int relevantOutput = 0, bool softMax = false)
+    public List<List<List<float>>> SetPartialDerivatives(List<List<List<List<float>>>> nN, List<List<List<float>>> calculations, bool sigmoid, int relevantOutput = 0, bool softMax = false)
     {
         List<List<List<float>>> derivatives = new List<List<List<float>>>();
 
@@ -191,28 +191,27 @@ public class NeuralNetworkController : MonoBehaviour
             {
                 derivatives[i].Add(new List<float>());
 
-                float postSigmoidDerivative = nN[i][j][0][1];
-                float preSigmoidDerivative = postSigmoidDerivative;
+                float postActivationFunctionDerivative = Math.Clamp( nN[i][j][0][1], -1, 1);
+                float preActivationFunctionDerivative = postActivationFunctionDerivative;
 
                 if(i != nN.Count - 1)
                 {
-                    preSigmoidDerivative = postSigmoidDerivative * DerivativeOfSigmoid(calculations[i+1][j][0]);
+                    preActivationFunctionDerivative = postActivationFunctionDerivative * (sigmoid? DerivativeOfSigmoid(calculations[i+1][j][0]) : DerivativeOfReLu(calculations[i+1][j][0]));
                 }
+                //print(i + " " + j + " " + preActivationFunctionDerivative);
                 
-                nN[i][j][2].Clear();
-                
-                derivatives[i][j].Add(preSigmoidDerivative);
+                derivatives[i][j].Add(preActivationFunctionDerivative);
 
                 foreach(List<float> unweightedInput in calculations[i])
                 {
-                    derivatives[i][j].Add(unweightedInput[1] * preSigmoidDerivative);
+                    derivatives[i][j].Add(unweightedInput[1] * preActivationFunctionDerivative);
                 }
 
                 if(i > 0)
                 {
                     for(int y = 0; y <= nN[i-1].Count - 1; y++) 
                     {
-                        nN[i-1][y][0][1] += nN[i][j][1][y] * preSigmoidDerivative;
+                        nN[i-1][y][0][1] += nN[i][j][1][y] * preActivationFunctionDerivative;
                     }
                 }
 
@@ -246,11 +245,11 @@ public class NeuralNetworkController : MonoBehaviour
     {
         if(UnityEngine.Random.value > 0.5)
         {
-            return UnityEngine.Random.value * 1;
+            return UnityEngine.Random.value * 0.1f;
         }
         else
         {
-            return -UnityEngine.Random.value * 1;
+            return -UnityEngine.Random.value * 0.1f;
         }
     }
 
@@ -264,6 +263,15 @@ public class NeuralNetworkController : MonoBehaviour
         return (float)(1 /(1+Math.Exp(-input)));
     }
 
+    float ReLu(float input)
+    {
+        return input < 0 ? 0 : input;
+    }
+
+    float DerivativeOfReLu(float input)
+    {
+        return input < 0 ? 0 : 1;
+    }
     //https://gist.github.com/jogleasonjr/55641e503142be19c9d3692b6579f221
     double[] SoftMaxFunction(List<float> input)
     {
@@ -280,15 +288,17 @@ public class NeuralNetworkController : MonoBehaviour
         {
             if(output[inRegardsToInput] >= 0.9999999)
             {
-                return 0.1f;
-            }
-            return (float)(output[inRegardsToOutput] * (1 - output[inRegardsToInput]));
+                return 0.01f;
+            } 
+            //print(output[inRegardsToOutput] * (1 - output[inRegardsToInput]) + " Same");
+            return Math.Clamp((float)(output[inRegardsToOutput] * (1 - output[inRegardsToInput])), 0.01f, 1);
         }
-
+        
         if(output[inRegardsToInput] <= 0.0000001)
         {
-            return -0.1f;
+            return -0.001f;
         }
-        return (float)(output[inRegardsToOutput] * (0 - output[inRegardsToInput]));
+        //print(output[inRegardsToOutput] * (0 - output[inRegardsToInput]) + " Not Same");
+        return Math.Clamp((float)(output[inRegardsToOutput] * (0 - output[inRegardsToInput])), -1, 0);
     }
 }
