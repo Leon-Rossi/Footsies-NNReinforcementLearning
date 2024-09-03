@@ -234,7 +234,7 @@ public class NNFighterController : MonoBehaviour
         var reward = Reward();
         float leftAdvantage = (float)(decayRate * leftThisStateValue - leftLastStateValue + reward);
         float policyAdvantage = leftAdvantage;
-        float valueAdvantage = leftAdvantage + (leftLastStateValue < 1? 1:0);
+        float valueAdvantage = leftAdvantage + (leftLastStateValue < 1? 1:0) + (leftLastStateValue > 11? -1:0);
 
         print(leftAdvantage + " " + policyAdvantage  + " " + valueAdvantage + " true advantage " + leftThisStateValue + " " + leftLastStateValue + "  " + reward + " " + leftLastOutputResult);
 
