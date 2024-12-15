@@ -61,7 +61,7 @@ namespace Footsies
 
         private Animator roundUIAnimator;
 
-        private BattleAI battleAI = null;
+        public BattleAI battleAI = null;
 
         NNFighterController nNFighterController = null;
         public bool rightIsNN;
@@ -70,6 +70,7 @@ namespace Footsies
         private float timeSinceLastDeath;
         public int leftTotalReward;
         public int rightTotalReward;
+        public bool isTerminalState;
 
         int maxRoundTime = 3000;
 
@@ -251,7 +252,10 @@ namespace Footsies
                     fighter1.ClearInput();
                     fighter2.ClearInput();
 
-                    battleAI = null;
+                    if(!isNNTraining)
+                    {
+                        battleAI = null;
+                    }
 
                     roundUIAnimator.SetTrigger("RoundEnd");
 
@@ -273,12 +277,10 @@ namespace Footsies
                             fighter1RoundWon++;
                             fighter1.RequestWinAction();
                         }
-
                         else if (deadFighter[0] == fighter1 && isNNTraining)
                         {
-                            rightTotalReward += 10;
                             leftTotalReward -= 10;
-                            //fighter2.RequestWinAction();
+                            isTerminalState = true;
 
                             fighter1.SetupBattleStart(fighterDataList[0], new Vector2(-2f, 0f), true);
                             fighter2.SetupBattleStart(fighterDataList[0], new Vector2(2f, 0f), false);
@@ -289,9 +291,8 @@ namespace Footsies
                         else if (deadFighter[0] == fighter2 && isNNTraining)
                         {                
                             leftTotalReward += 10;
-                            rightTotalReward -= 10;
+                            isTerminalState = true;
 
-                            //fighter1.RequestWinAction();
                             fighter1.SetupBattleStart(fighterDataList[0], new Vector2(-2f, 0f), true);
                             fighter2.SetupBattleStart(fighterDataList[0], new Vector2(2f, 0f), false);
                             ChangeRoundState(RoundStateType.Fight);
@@ -341,7 +342,7 @@ namespace Footsies
             UpdatePushCharacterVsBackground();
             UpdateHitboxHurtboxCollision();
 
-            CheckGuardReward();
+            //CheckGuardReward();
         }
 
         void CheckGuardReward()
@@ -422,13 +423,13 @@ namespace Footsies
 
             InputData p2Input = new InputData();
 
-            if (battleAI != null)
-            {
-                p2Input.input |= battleAI.getNextAIInput();
-            }
-            else if(rightIsNN)
+            if(rightIsNN)
             {
                 p2Input.input = nNFighterController.RunNN(false);
+            }
+            else if (battleAI != null)
+            {
+                p2Input.input |= battleAI.getNextAIInput();
             }
             else
             {

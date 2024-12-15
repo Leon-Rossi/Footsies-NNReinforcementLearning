@@ -76,14 +76,6 @@ public class Tests : MonoBehaviour
 
     void Save()
     {
-        var nN = neuralNetworkController.CreateNN(0, 0, 2, 1);
-        var runNN = neuralNetworkController.RunNN(nN, new List<float>(){1, 2, 1, 0, 50, 5, 0});
-        var runNNandSave = neuralNetworkController.RunNNAndSave(nN,  new List<float>(){1, 2, 1, 0, 50, 5, 0});
-        print(runNN[0] + " " + runNNandSave.output[0]);
-
-        runNN = neuralNetworkController.RunNN(nN, new List<float>(){0, 0, 5, 0, 50, 2, 1});
-        runNNandSave = neuralNetworkController.RunNNAndSave(nN,  new List<float>(){0, 0, 5, 0, 50, 2, 1});
-        print(runNN[0] + " " + runNNandSave.output[0]);
-
+        
     }
 }

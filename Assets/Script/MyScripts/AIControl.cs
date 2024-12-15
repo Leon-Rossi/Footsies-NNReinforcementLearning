@@ -12,6 +12,8 @@ public class AIControl : MonoBehaviour
     public int currentAISave;
     public int speed = 1;
 
+    public bool displayInfo;
+
     string saveFilePath;
 
     string json;
@@ -24,18 +26,26 @@ public class AIControl : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        saveFilePath = Application.persistentDataPath + "/GameData.json";
+        saveFilePath = Application.persistentDataPath + "/GameData";
 
         CreateJSONFile();
         LoadFile();
         json = "";
     }
 
+    void Update()
+    {
+        if(speed != Time.timeScale)
+        {
+            Time.timeScale = speed;
+        }
+    }
+
     void CreateJSONFile()
     {
-        if(!File.Exists(saveFilePath))
+        if(!Directory.Exists(saveFilePath))
         {
-            File.Create(saveFilePath);
+            Directory.CreateDirectory(saveFilePath);
             print(saveFilePath);
             print("New Save File created");
         }
@@ -43,31 +53,42 @@ public class AIControl : MonoBehaviour
         print("Found Save File");
     }
 
-    //Saves the AISaves List into a JSON FLie
-    public void SaveFile()
-    {
-        Time.timeScale = speed;
-
-        json = JsonConvert.SerializeObject(new AISavesClass(AISaves), Formatting.Indented, 
-        new JsonSerializerSettings 
-        {  
-            ReferenceLoopHandling = ReferenceLoopHandling.Ignore
-        });
-
-        File.WriteAllText(saveFilePath, json);
-    }
-
-    //Loads AISaves from JSON File
     void LoadFile()
     {
-        json = File.ReadAllText(saveFilePath);
-        if(json != "")
+        foreach(string filePath in Directory.GetFiles(saveFilePath))
         {
-            AISaves = JsonConvert.DeserializeObject<AISavesClass>(json).AISaves;
+            json = File.ReadAllText(filePath);
+            print(JsonConvert.DeserializeObject<AISaveClass>(json).AISave.saveName);
+            AISaves.Add(JsonConvert.DeserializeObject<AISaveClass>(json).AISave);
         }
         
         print("try File Load");
     }
+
+    public void SaveFile()
+    {
+        Time.timeScale = speed;
+        foreach(AISave aiSave in AISaves)
+        {
+            json = JsonConvert.SerializeObject(new AISaveClass(aiSave), Formatting.Indented, 
+            new JsonSerializerSettings 
+            {  
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+            });
+
+            print(saveFilePath + "/" + aiSave.saveName + ".json");
+            if(!File.Exists(saveFilePath + "/" + aiSave.saveName + ".json"))
+            {
+                File.Create(saveFilePath + "/" + aiSave.saveName + ".json").Close();
+                print(saveFilePath + "/" + aiSave.saveName);
+                print("New Save File created");
+            }
+            File.WriteAllText(saveFilePath + "/" + aiSave.saveName + ".json", json);
+        }
+
+    }
+
+
 
     public class AISavesClass
     {
@@ -81,6 +102,21 @@ public class AIControl : MonoBehaviour
         public AISavesClass(List<AISave> AISavesList)
         {
             AISaves = AISavesList;
+        }
+    }
+
+        public class AISaveClass
+    {
+        public AISave AISave;
+
+        public void init(AISave AISaveInit)
+        {
+            AISave = AISaveInit;
+        }
+
+        public AISaveClass(AISave AISaveInit)
+        {
+            AISave = AISaveInit;
         }
     }
 }

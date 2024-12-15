@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 using System;
+using MathNet;
 
 public class NeuralNetworkController : MonoBehaviour
 {
@@ -13,7 +14,7 @@ public class NeuralNetworkController : MonoBehaviour
     }
 
     //Creates a neural Network in form of a 4D List (Layers, neurons, List, List with a single bias and later the fitness function ([0][0][0][1]) + List with weights)
-    public List<List<List<List<float>>>> CreateNN(int layerCount, int layerSize, int inputCount,int outputCount)
+    public List<List<List<List<float>>>> CreateNN(int layerCount, int layerSize, int inputCount, int outputCount, bool sigmoid = false)
     {
         List<List<List<List<float>>>> nN = new List<List<List<List<float>>>>();
 
@@ -35,21 +36,28 @@ public class NeuralNetworkController : MonoBehaviour
                 node.Add(new List<float>());
                 node.Add(new List<float>());
 
-                node[0].Add(RandomValue());
+                node[0].Add(0);
                 node[0].Add(0);
                 
                 if(layer != nN[0])
                 {
                     foreach(int i in Enumerable.Range(1, layerSize))
                     {
-                        node[1].Add(RandomValue());
+                        if(sigmoid)
+                        {
+                            node[1].Add(SampleFromNormalDistribution(0, Math.Sqrt((double)1/(2*layerSize))));
+                        }
+                        else
+                        {
+                            node[1].Add(SampleFromNormalDistribution(0, Math.Sqrt((double)2/layerSize)));
+                        }
                     }
                 }
                 else
                 {
                     foreach(int i in Enumerable.Range(1, inputCount))
                     {
-                        node[1].Add(RandomValue());
+                        node[1].Add(SampleFromNormalDistribution(0, Math.Sqrt((double)2/inputCount)));
                     }
                 }
             }
@@ -69,13 +77,13 @@ public class NeuralNetworkController : MonoBehaviour
             node.Add(new List<float>());
             node.Add(new List<float>());
 
-            node[0].Add(RandomValue());
+            node[0].Add(0);
             node[0].Add(0);
             node[0].Add(0);
             
             foreach(int i in Enumerable.Range(1, layerSize))
             {
-                node[1].Add(RandomValue());
+                node[1].Add(SampleFromNormalDistribution(0, Math.Sqrt((double)1/(layerSize + 1))));
             }
 
         }
@@ -138,12 +146,16 @@ public class NeuralNetworkController : MonoBehaviour
             {
                 calculations[^1].Add(new List<float>());
 
+                //print(String.Join(", ", currentInput));
+                //print(String.Join(", ", node[1]) + ", " + node[0][0]);
                 float output = node[1].Zip(currentInput, (x, y) => x * y).Sum() + node[0][0];
                 
                 calculations[^1][^1].Add(output);
                 calculations[^1][^1].Add(sigmoid? Sigmoid(output): ReLu(output));
                 nextInput.Add(sigmoid? Sigmoid(output): ReLu(output));
                 outputList.Add(output);
+
+                //print(output + " " + ReLu(output));
             }
         }
         return (outputList, calculations);
@@ -191,22 +203,24 @@ public class NeuralNetworkController : MonoBehaviour
             {
                 derivatives[i].Add(new List<float>());
 
-                float postActivationFunctionDerivative = Math.Clamp( nN[i][j][0][1], -1, 1);
+                float postActivationFunctionDerivative = nN[i][j][0][1];
                 float preActivationFunctionDerivative = postActivationFunctionDerivative;
+
 
                 if(i != nN.Count - 1)
                 {
                     preActivationFunctionDerivative = postActivationFunctionDerivative * (sigmoid? DerivativeOfSigmoid(calculations[i+1][j][0]) : DerivativeOfReLu(calculations[i+1][j][0]));
                 }
+                //print(postActivationFunctionDerivative + " " + preActivationFunctionDerivative);
                 //print(i + " " + j + " " + preActivationFunctionDerivative);
                 
                 derivatives[i][j].Add(preActivationFunctionDerivative);
 
                 foreach(List<float> unweightedInput in calculations[i])
                 {
-                    derivatives[i][j].Add(unweightedInput[1] * preActivationFunctionDerivative);
+                     derivatives[i][j].Add(unweightedInput[1] * preActivationFunctionDerivative);
                 }
-
+                
                 if(i > 0)
                 {
                     for(int y = 0; y <= nN[i-1].Count - 1; y++) 
@@ -229,7 +243,7 @@ public class NeuralNetworkController : MonoBehaviour
         {
             for(int j = 0; j <= nN[i].Count - 1; j++)
             {
-                nN[i][j][0][0] += toBeAddedValue * derivatives[i][j][1];
+                nN[i][j][0][0] += toBeAddedValue * derivatives[i][j][0];
 
                 for(int y = 0; y <= nN[i][j][1].Count -1; y++)
                 {
@@ -245,11 +259,11 @@ public class NeuralNetworkController : MonoBehaviour
     {
         if(UnityEngine.Random.value > 0.5)
         {
-            return UnityEngine.Random.value * 0.1f;
+            return UnityEngine.Random.value * 0.5f;
         }
         else
         {
-            return -UnityEngine.Random.value * 0.1f;
+            return -UnityEngine.Random.value * 0.5f;
         }
     }
 
@@ -286,19 +300,17 @@ public class NeuralNetworkController : MonoBehaviour
     {
         if(inRegardsToOutput == inRegardsToInput)
         {
-            if(output[inRegardsToInput] >= 0.9999999)
-            {
-                return 0.01f;
-            } 
             //print(output[inRegardsToOutput] * (1 - output[inRegardsToInput]) + " Same");
-            return Math.Clamp((float)(output[inRegardsToOutput] * (1 - output[inRegardsToInput])), 0.01f, 1);
+            return (float)(output[inRegardsToOutput] * (1 - output[inRegardsToInput]));
         }
         
-        if(output[inRegardsToInput] <= 0.0000001)
-        {
-            return -0.001f;
-        }
         //print(output[inRegardsToOutput] * (0 - output[inRegardsToInput]) + " Not Same");
-        return Math.Clamp((float)(output[inRegardsToOutput] * (0 - output[inRegardsToInput])), -1, 0);
+        return (float)(output[inRegardsToOutput] * (0 - output[inRegardsToInput]));
+    }
+
+    private float SampleFromNormalDistribution(float mean, double standardDeviation)
+    {
+        MathNet.Numerics.Distributions.Normal normalDist = new MathNet.Numerics.Distributions.Normal(mean, standardDeviation);
+        return (float)normalDist.Sample();
     }
 }

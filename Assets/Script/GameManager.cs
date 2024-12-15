@@ -67,7 +67,7 @@ namespace Footsies
 
         public void LoadTrainingScene()
         {
-            isVsCPU = false;
+            isVsCPU = true;
             humanVsNN = false;
             isNNTraining = true; 
             LoadBattleScene();

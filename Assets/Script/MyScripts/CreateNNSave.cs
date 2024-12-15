@@ -5,19 +5,19 @@ public class CreateNNSave : MonoBehaviour
     public AIControl aiControl;
 
     private string saveName;
-    private bool sigmoid = true;
+    private bool sigmoid = false;
 
     private float decayRate;
     private float policyLearningRate;
     private int policyLayerCount;
     private int policyLayerSize;
-    private int policyInputCount = 17;
-    private int policyOutputCount = 7;
+    private int policyInputCount = 15;
+    private int policyOutputCount = 9;
     
     private float valueLearningRate;
     private int valueLayerCount;
     private int valueLayerSize;
-    private int valueInputCount = 17;
+    private int valueInputCount = 15;
     private int valueOutputCount = 1;
 
     GameObject AIMenu;
@@ -41,7 +41,6 @@ public class CreateNNSave : MonoBehaviour
     {
         decayRate = float.Parse(input);
         flag1 = true;
-        print("Test");
     }
 
     public void ReadPolicyLearningRate(string input)

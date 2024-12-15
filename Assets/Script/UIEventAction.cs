@@ -100,6 +100,7 @@ namespace Footsies
 
         public void ExitGame()
         {
+            GameObject.Find("GameMaster").GetComponent<AIControl>().SaveFile();
             Application.Quit();
         }
 

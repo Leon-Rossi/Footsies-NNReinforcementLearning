@@ -12,7 +12,7 @@ public class AISave
     [JsonIgnore] NeuralNetworkController neuralNetworkController;
 
     public string saveName;
-    public bool sigmoid = true;
+    public bool sigmoid = false;
 
     public float decayRate;
     public float policyLearningRate;
@@ -29,6 +29,8 @@ public class AISave
 
     public List<List<List<List<float>>>> policyNN = new List<List<List<List<float>>>>();
     public List<List<List<List<float>>>> valueNN = new List<List<List<List<float>>>>();
+
+    public List<float> measurments = new List<float>();
 
     public List<List<List<List<List<float>>>>> oldPolicyNNs = new List<List<List<List<List<float>>>>>();
 
@@ -55,8 +57,8 @@ public class AISave
         aIControl = GameObject.Find("GameMaster").GetComponent<AIControl>();
         neuralNetworkController = GameObject.Find("GameMaster").GetComponent<NeuralNetworkController>();
 
-        policyNN = neuralNetworkController.CreateNN(policyLayerCount, policyLayerSize, policyInputCount, policyOutputCount);
-        valueNN = neuralNetworkController.CreateNN(valueLayerCount, valueLayerSize, valueInputCount, valueOutputCount);
+        policyNN = neuralNetworkController.CreateNN(policyLayerCount, policyLayerSize, policyInputCount, policyOutputCount, sigmoid);
+        valueNN = neuralNetworkController.CreateNN(valueLayerCount, valueLayerSize, valueInputCount, valueOutputCount, sigmoid);
     }
 
     private void Awake()

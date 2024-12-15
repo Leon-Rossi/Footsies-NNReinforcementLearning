@@ -1,10 +1,10 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Footsies
 {
 
-    public class BattleAI
+    public class MyBattleAI
     {
         public class FightState
         {
@@ -26,7 +26,7 @@ namespace Footsies
         public static readonly uint maxFightStateRecord = 10;
         private int fightStateReadIndex = 5;
 
-        public BattleAI(BattleCore core)
+        public MyBattleAI(BattleCore core)
         {
             battleCore = core;
         }
